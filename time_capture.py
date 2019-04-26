@@ -3,7 +3,7 @@ calculates work time of a sepcific project by extracting time stamps in a code a
 autor: Stefan Schneider
 Github: StefSchneider
 """
-## project: TIME CAPTURE
+#@ project: TIME CAPTURE
 ## 14.04.2019 - 12:00 # B
 ## 14.04.2019 - 12:15 # Ende
 ## 14.04.2019 - 12:15 # B
@@ -30,7 +30,12 @@ Github: StefSchneider
 ## 21.04.2019 # 20:45 #E
 ## 23.04.2019 # 6:41 # A
 ## 23.04.2019 # 7:03 # Ende
-
+## 24.04.2019 # 10:15 # A
+## 24.04.2019 # 10:30 # E
+## 24.04.2019 # 18:07 # A
+## 24.04.2019 # 18:27 # e
+## 25.04.2019 # 18:21 # A
+## 25.4.2019 # 18:41 # E
 
 
 """
@@ -79,7 +84,7 @@ import PySimpleGUI as sg
 
 EXTENSION_FILENAME_TIMESTAMP: str = "_timestamp" # extension for new filename with timestamp data
 EXTENSION_FILENAME_CODE: str = "_code" # extension for new filename without timestamp data
-FILEEXTENSIONS: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs",),
+FILEEXTENSIONS: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
                         EXTENSION_FILENAME_CODE: ("py",)
                         }
 MARKS_TIMESTAMP: tuple = ("##", "#@", "#T") # add more if you want
@@ -100,12 +105,6 @@ timestamps: list = []
 button_source_file: bool = False
 source_file: str = ""
 
-
-
-"""
-Abfrage, ob zu überprüfender File überhaupt vorhanden ist, sonst Rückmeldung, dass File nicht vorhanden.
-Möglicherweise Schleife, bis richtige Filename eingegeben wurde oder Nutzer abbricht.
-"""
 
 class File(object):
     """
@@ -181,8 +180,6 @@ class File(object):
         )
 
 
-
-
     def overwrite_file(self, file_data: typing.Tuple[str, str], code: list = []):
         """
         Überschreibt die Originaldatei mit dem neuen Code
@@ -213,25 +210,38 @@ class Timestamp_Item:
         """
         pass
 
-
-    def parse_line(self, line_in: str):
+    def parse_timestamp_data(line_in: str) -> typing.Tuple[str, datetime.date, datetime.time, str]:
         """
-        teilt die Zeile in ihre Bestandteile auf
-        Achtung: Zeile kann auch mit Projektnamen oder Namen für Teil beginnen
-        :return:
+        divides comment lines in project name or time data
+        :param: line: current line of original file to analyze
+        :return: project name, date, time, start or end of timestamp
         """
         self.line_in = line_in
-        self.line_in = self.line_in.split(DIVIDE_SIGNS)
+        any(line.startswith(marks) for marks in MARKS_TIMESTAMP)
+        self.line_in = any(self.line_in.split(divider) for divider in DIVIDE_SIGNS)
         pass
 
 
     def check_entries(self):
         """
         überprüft die Einträge auf richtige Schreibweise
+        data.isoformat zur Umwandlung nutzen
         überprüft die Einträge auf Logik
+        Fehlermöglichkeiten bei Analyse timestamps:
+        - kein Vermerk, ob Anfang oder Ende der Arbeit
+        - Ende der Arbeitssession liegt vor dem Anfang der Arbeitssession
+        - Datum ist im falschen Format eingetragen
+        - Uhrzeit ist um falschen Format eingetragen
+        - zwischen Anfang und Ende liegen mehr als 24 Stunden (kann über Konstante gesteuert werden)
         :return: True oder False sowie die mögliche Fehlerstelle
         """
         pass
+
+
+    def check_entry_date(self, current_date: datetime.date, predessesor_date: datetime.date = "0000-00-00") -> bool:
+        correct_date: bool = False
+
+        return correct_date
 
 
     def add_entry(self):
@@ -260,14 +270,6 @@ class Timestamp_Item:
         pass
 
 
-
-def parse_timestamp_data(line: str) -> typing.Tuple[str, datetime.date, datetime.time, str]:
-    """
-    divides comment lines in project name or time data
-    :param: line: current line of original file to analyze
-    :return: project name, date, time, start or end of timestamp
-    """
-
 def show_error_message(error_message: str):
     """
     Opens a window and shows an error message
@@ -285,17 +287,7 @@ def show_error_message(error_message: str):
     error_button, values = window.Read()
 
 
-    """
-    Fehlermöglichkeiten bei Analyse timestamps:
-    - kein Vermerk, ob Anfang oder Ende der Arbeit
-    - Ende der Arbeitssession liegt vor dem Anfang der Arbeitssession
-    - Datum ist im falschen Format eingetragen
-    - Uhrzeit ist um falschen Format eingetragen
-    - zwischen Anfang und Ende liegen mehr als 24 Stunden (kann über Konstante gesteuert werden) 
-    """
-    pass
-
-
+# main program
 while not button_source_file:
     while source_file == "":
         sg.ChangeLookAndFeel("TealMono")
@@ -305,10 +297,14 @@ while not button_source_file:
             [sg.Submit("Submit"), sg.Cancel("Cancel")]
         ]
         (button_source_file, (source_file,)) = sg.Window("Capture Timestamp").Layout(layout).Read()
+        try:
+            open(source_file)
+        except FileNotFoundError:
+            source_file = ""
         if button_source_file == "Cancel":
             break
         if source_file == "":
-            show_error_message("Can't start work without file!")
+            show_error_message("Can't find file!")
     if button_source_file == "Cancel":
         break
     print("Source:", source_file)
@@ -318,31 +314,18 @@ while not button_source_file:
     filename_out_timestamp, filename_out_code = file_input.create_files(file_in_data)
     print(filename_out_timestamp)
     print(filename_out_code)
+    # split code and timestamps in file and list
     with open(source_file, "r") as fobj_in:
         with open(filename_out_code, "w+") as fobj_out_code:
             for line in fobj_in:
-                if line.startswith("##"):
+                if any(line.startswith(marks) for marks in MARKS_TIMESTAMP):
                     timestamps.append([line])
                 else:
                     fobj_out_code.writelines(line)
 
 print(timestamps)
 
-
-
 """
-Ablaufschritte Hauptprogramm
-- Eingabe des zu untersuchenden Files (über Funktion)
-- Auslesen jeder Zeile des Files
-- Zeile beginnt mit ##:
-    ja: Zeiterfassungsfunktionen starten und Angaben in neue Datei für Zeiterfassung schreiben
-    nein: Zeile in neue Datei für Programmcode schreiben
-- Einträge für Zeiterfassung prüfen (über Funktionen)
-- Daten für Zeitstempel in neue Datei schreiben
-- Daten für Programmcode in neue Datei schreiben
+Hauptprogrammfehlt noch:
+- timestamp-Daten in richtige Datei schreiben
 """
-
-
-
-
-
