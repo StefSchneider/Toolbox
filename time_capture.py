@@ -36,6 +36,11 @@ Github: StefSchneider
 ## 24.04.2019 # 18:27 # e
 ## 25.04.2019 # 18:21 # A
 ## 25.4.2019 # 18:41 # E
+## 26.04.2019 # 19:57 # A
+## 26.04.2019 # 20:07 # E
+## 26.04.2019 # 21:20 # A # Programmierung Exceptions
+## 26.04.2019 # 22:00 # Ende
+##
 
 
 """
@@ -239,9 +244,9 @@ class Timestamp_Item:
 
 
     def check_entry_date(self, current_date: datetime.date, predessesor_date: datetime.date = "0000-00-00") -> bool:
-        correct_date: bool = False
+        adjust_date: bool = False
 
-        return correct_date
+        return adjust_date
 
 
     def add_entry(self):
@@ -298,9 +303,11 @@ while not button_source_file:
         ]
         (button_source_file, (source_file,)) = sg.Window("Capture Timestamp").Layout(layout).Read()
         try:
-            open(source_file)
+            fobj = open(source_file)
         except FileNotFoundError:
             source_file = ""
+        else:
+            fobj.close()
         if button_source_file == "Cancel":
             break
         if source_file == "":
@@ -316,12 +323,26 @@ while not button_source_file:
     print(filename_out_code)
     # split code and timestamps in file and list
     with open(source_file, "r") as fobj_in:
-        with open(filename_out_code, "w+") as fobj_out_code:
-            for line in fobj_in:
-                if any(line.startswith(marks) for marks in MARKS_TIMESTAMP):
-                    timestamps.append([line])
-                else:
-                    fobj_out_code.writelines(line)
+        try:
+            fobj_out_code = open(filename_out_code, "x")
+        except FileExistsError:
+            show_error_message(f"Sorry, \'{filename_out_code}\' already exists.")
+            sg.ChangeLookAndFeel("TealMono")
+            layout = [
+                [sg.Text(f"Overwrite file \'{filename_out_code}\'?")],
+                [sg.Ok("Yes"), sg.Cancel("No")]
+            ]
+            (button, values) = sg.Window("File owerwriting").Layout(layout).Read()
+            if button == "Yes":
+                fobj_out_code = open(filename_out_code, "w")
+            else:
+                show_error_message("Finish program without result")
+                break
+        for line in fobj_in:
+            if any(line.startswith(marks) for marks in MARKS_TIMESTAMP):
+                timestamps.append([line])
+            else:
+                fobj_out_code.writelines(line)
 
 print(timestamps)
 
