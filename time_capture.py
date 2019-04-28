@@ -40,7 +40,9 @@ Github: StefSchneider
 ## 26.04.2019 # 20:07 # E
 ## 26.04.2019 # 21:20 # A # Programmierung Exceptions
 ## 26.04.2019 # 22:00 # Ende
-##
+## 27.04.2019 # 10:04 # S
+## 27.04.2019 # 10.55 # E
+
 
 
 """
@@ -92,8 +94,9 @@ EXTENSION_FILENAME_CODE: str = "_code" # extension for new filename without time
 FILEEXTENSIONS: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
                         EXTENSION_FILENAME_CODE: ("py",)
                         }
-MARKS_TIMESTAMP: tuple = ("##", "#@", "#T") # add more if you want
-DIVIDE_SIGNS: tuple = ("/", "-", "^", "#", "*") # add more if you want
+MARKS_TIMESTAMP: tuple = ("##", "#@", "#T") # add more if needed
+DIVIDE_SIGNS: tuple = ("/", "-", "^", "#", "*") # add more if needed
+DATE_SPLIT_SIGNS: tuple = (":", ".", ("/")) # add more if needed
 SYNONYM_START: set = {"s", "S", "start", "Start", "START", "b", "B", "begin", "Beginn", "beginn", "BEGIN", "BEGINN",
                       "Anfang", "anfang", "ANFANG", "a", "A", "open", "OPEN", "Open", "o", "O"}
 SYNONYM_END: set = {"e", "E", "End", "end", "Ende", "ende", "ENDE", "close", "Close", "CLOSE", "c", "C"}
@@ -222,7 +225,6 @@ class Timestamp_Item:
         :return: project name, date, time, start or end of timestamp
         """
         self.line_in = line_in
-        any(line.startswith(marks) for marks in MARKS_TIMESTAMP)
         self.line_in = any(self.line_in.split(divider) for divider in DIVIDE_SIGNS)
         pass
 
@@ -243,8 +245,35 @@ class Timestamp_Item:
         pass
 
 
-    def check_entry_date(self, current_date: datetime.date, predessesor_date: datetime.date = "0000-00-00") -> bool:
-        adjust_date: bool = False
+
+    def check_entry_date(self, date_in: str, predessesor_date: str = "0000-00-00") -> str:
+        """
+        Überprüft und korrgiert den Datumseintrag
+        Vorgehen:
+        1. zerlegen des mitgelieferten Datumsstrings
+        2. überprüfen, welcher Teil zum Jahr, Monat und Tag des Datumseintrags gehört anhand von Logiken (Monat > 12 etc.)
+        -> bei Unklarheiten Aufruf von Methode revise_date
+        3. zuordnen, welcher Teil zum Jahr, Monat und Tag des Datumseintrags gehört
+        Überprüfungen:
+        - ist der ausgelesene Datumseintrag größer als das aktuelle Datum: Fehlermeldung und Korrrekturmöglichkeit
+        - ist der ausgelesene Datumseintrag kleiner als der letzte vorhandene Datumseintrag: Fehlermeldung und Korrrekturmöglichkeit
+
+
+        :param current_date: Datumseintrag aus der Kommentarzeile
+        :param predessesor_date: letzter vorhandener und überprüfter Datumseintrag
+        :return: überprüftes und korrigiertes Datum im ISO-Format
+        """
+        self.date_in = date_in
+        part1: str = ""
+        part2: str = ""
+        part3: str = ""
+        year: int = 0
+        month: int = 0
+        day: int = 0
+        adjust_date: str = "0000-00-00"
+        self.date_in = self.date_in.strip(" ")
+        part1, part2, part3 = (self.date_in.split(divider) for divider in DATE_SPLIT_SIGNS)
+        print(part1[0], part2, part3)
 
         return adjust_date
 
@@ -326,9 +355,9 @@ while not button_source_file:
         try:
             fobj_out_code = open(filename_out_code, "x")
         except FileExistsError:
-            show_error_message(f"Sorry, \'{filename_out_code}\' already exists.")
             sg.ChangeLookAndFeel("TealMono")
             layout = [
+                [sg.Text(f"\'{filename_out_code}\' already exists.")],
                 [sg.Text(f"Overwrite file \'{filename_out_code}\'?")],
                 [sg.Ok("Yes"), sg.Cancel("No")]
             ]
@@ -346,7 +375,20 @@ while not button_source_file:
 
 print(timestamps)
 
+current_timestamp = Timestamp_Item("## 14.04.2019 - 12:00 # B")
+current_timestamp.check_entry_date("14.04.2019")
+
 """
 Hauptprogrammfehlt noch:
 - timestamp-Daten in richtige Datei schreiben
+"""
+
+"""
+    def revise_date(self) -> datetime.date():
+        Öffnet einen Kalendereintrag und gibt das korrigierte Datum zurück
+        :return:
+        new_date: datetime.date() = "0000-00-00"
+
+ #       return new_date
+    pass
 """
