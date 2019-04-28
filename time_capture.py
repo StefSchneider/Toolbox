@@ -42,6 +42,8 @@ Github: StefSchneider
 ## 26.04.2019 # 22:00 # Ende
 ## 27.04.2019 # 10:04 # S
 ## 27.04.2019 # 10.55 # E
+## 27.04.2019 # 14:23 # A # Split timestamp with regular expressions
+## 27.04.2019 # 15:00 # E
 
 
 
@@ -88,6 +90,7 @@ Fehlerüberprüfung:
 from datetime import datetime
 import typing
 import PySimpleGUI as sg
+import re
 
 EXTENSION_FILENAME_TIMESTAMP: str = "_timestamp" # extension for new filename with timestamp data
 EXTENSION_FILENAME_CODE: str = "_code" # extension for new filename without timestamp data
@@ -272,8 +275,8 @@ class Timestamp_Item:
         day: int = 0
         adjust_date: str = "0000-00-00"
         self.date_in = self.date_in.strip(" ")
-        part1, part2, part3 = (self.date_in.split(divider) for divider in DATE_SPLIT_SIGNS)
-        print(part1[0], part2, part3)
+        parts = re.findall(r"(-?\d+)", self.line_in)
+        print(parts)
 
         return adjust_date
 
