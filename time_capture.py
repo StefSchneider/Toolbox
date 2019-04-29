@@ -44,7 +44,8 @@ Github: StefSchneider
 ## 27.04.2019 # 10.55 # E
 ## 27.04.2019 # 14:23 # A # Split timestamp with regular expressions
 ## 27.04.2019 # 15:00 # E
-##
+## 28.04.2019 # 19:45 # A
+## 28.04.2019 # 21:14 # Ende
 
 
 
@@ -99,7 +100,7 @@ FILEEXTENSIONS: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
                         EXTENSION_FILENAME_CODE: ("py",)
                         }
 MARKS_TIMESTAMP: tuple = ("##", "#@", "#T") # add more if needed
-DIVIDE_SIGNS: tuple = ("/", "-", "^", "#", "*") # add more if needed
+DIVIDE_SIGNS = re.compile("[/|\-|\^|#|\*]") # group for regular expressions, add more if needed
 DATE_SPLIT_SIGNS: tuple = (":", ".", ("/")) # add more if needed
 SYNONYM_START: set = {"s", "S", "start", "Start", "START", "b", "B", "begin", "Beginn", "beginn", "BEGIN", "BEGINN",
                       "Anfang", "anfang", "ANFANG", "a", "A", "open", "OPEN", "Open", "o", "O"}
@@ -276,7 +277,12 @@ class Timestamp_Item:
         day: int = 0
         adjust_date: str = "0000-00-00"
         self.date_in = self.date_in.strip(" ")
-        parts = re.findall(r"(-?\d+)", self.line_in)
+        parts = re.split(DIVIDE_SIGNS, self.line_in)
+        print(parts, len(parts))
+        for i, part in enumerate(parts):
+            print(i)
+            parts[i] = parts[i].strip(" ")
+            print(parts[i])
         print(parts)
 
         return adjust_date
