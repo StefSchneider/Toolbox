@@ -44,9 +44,15 @@ Github: StefSchneider
 ## 27.04.2019 # 10.55 # E
 ## 27.04.2019 # 14:23 # A # Split timestamp with regular expressions
 ## 27.04.2019 # 15:00 # E
-## 28.04.2019 # 19:45 # A
-## 28.04.2019 # 21:14 # Ende
-##
+## 28.04.2019 # 9:30 # A
+## 28.04.2019 # 10:45 # E
+## 28.04.2019 # 16:00 # A
+## 28.04.2019 # 17:15 # End
+## 29.04.2019 # 19:45 # A
+## 29.04.2019 # 21:14 # Ende
+## 30.04.2019 # 7:30 # B
+## 30.04.2019 # 8:15  # E
+
 
 
 
@@ -248,7 +254,14 @@ class Timestamp_Item:
         - zwischen Anfang und Ende liegen mehr als 24 Stunden (kann über Konstante gesteuert werden)
         :return: True oder False sowie die mögliche Fehlerstelle
         """
-        pass
+        for marker in MARKS_TIMESTAMP:
+            self.line_in = self.line_in.strip(marker)
+        print(self.line_in)
+        parts = re.split(DIVIDE_SIGNS, self.line_in)
+        print(parts, len(parts))
+        for i, part in enumerate(parts):
+            parts[i] = parts[i].strip(" ")
+        print(parts)
 
 
 
@@ -386,8 +399,10 @@ while not button_source_file:
 
 print(timestamps)
 
-current_timestamp = Timestamp_Item("## 14.04.2019 - 12:00 # B")
-current_timestamp.check_entry_date("14.04.2019")
+current_timestamp = Timestamp_Item("## 14.04.2019 - 12:00 # B # Test-Beispiel") # ES DÜRFEN KEINE ANFANGSZEICHEN WIE ## DURCHGELASEN WERDEN
+current_timestamp.check_entries()
+
+
 
 """
 Hauptprogrammfehlt noch:
