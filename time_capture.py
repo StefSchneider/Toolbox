@@ -52,6 +52,8 @@ Github: StefSchneider
 ## 29.04.2019 # 21:14 # Ende
 ## 30.04.2019 # 7:30 # B
 ## 30.04.2019 # 8:15  # E
+## 1.5.2019 # 11:00 # A # Definition Exceptions und Check Projektname
+## 1.5.2019 # 12:00 # E
 
 
 
@@ -93,6 +95,13 @@ Fehlerüberprüfung:
 - mit dem Einlesen einer Zeile wird der als nächstes erwartete Eintrag für Start und Ende festgelegt,
     weicht dieser dann vom tatsächlichen Eintrag ab, erscheint eine Fehlermeldung
 
+Exceptions:
+- FileNotFoundError: Aufzurufender Dateiname bereits vorhanden
+- EOFError: Auszulesene Datei ist leer
+- FileExistsError: Die zu erstellende Datei existiert berits
+- InvalidDateError: Ungültige Datumsangabe (selbst programmieren)
+- InvalidTimeError: Ungültige Zeitangabe (selbst programmieren)
+
 """
 
 
@@ -114,8 +123,10 @@ SYNONYM_START: set = {"s", "S", "start", "Start", "START", "b", "B", "begin", "B
 SYNONYM_END: set = {"e", "E", "End", "end", "Ende", "ende", "ENDE", "close", "Close", "CLOSE", "c", "C"}
 TIME_RESOLUTION: int = 15
 MAX_HOURS: int = 24 # maximum hours allowed between start und end of a timestamp
+SECTION_TO_SHOW: int = 5 # number of date lines shown in case of start/end-Error
 
 projectname: str = ""
+found_projectname: bool = False # set on True if projectname is extracted from comment lines, else raise exception
 projectpart: str = ""
 expected_addition: str = "" # what addition at timestamp is expected next, start or end
 filename_in: str = ""
@@ -264,10 +275,40 @@ class Timestamp_Item:
         print(parts)
 
 
+    def check_projectname(self, timestamps: list) -> str:
+        """
+        Überrpüft, ob ein Projektname eingetragen ist,
+        falls nein, wird er abgefragt
+        :param timestamps: complete list of all timestamp comment lines
+        :return: projectname
+        """
+        self.timestamps = timestamps
+        for elements in self.timestamps:
+            projectnames = re.findall(r"projectname", elements[0])
+            if len(projectnames) == 1:
+                projectname = projectnames[0]
+                projectname = re.split("projectname",  elements)
+                projectname = projectname.strip(" ")
+                projectname = projectname.strip(":")
+            else:
+                button = "No"
+                while button != "Submit":
+                    sg.ChangeLookAndFeel("TealMono")
+                    layout = [
+                        [sg.Text("No valid projectname found! Please add projectname.")],
+                        [sg.InputText("")],
+                        [sg.Submit("Submit"), sg.Cancel()]
+                    ]
+                    (button, values) = sg.Window("Projectname").Layout(layout).Read()
+                projectname =  values[0]
+
+        return projectname
+
+
 
     def check_entry_date(self, date_in: str, predessesor_date: str = "0000-00-00") -> str:
         """
-        Überprüft und korrgiert den Datumseintrag
+        Überprüft und korrigiert den Datumseintrag
         Vorgehen:
         1. zerlegen des mitgelieferten Datumsstrings
         2. überprüfen, welcher Teil zum Jahr, Monat und Tag des Datumseintrags gehört anhand von Logiken (Monat > 12 etc.)
@@ -401,6 +442,7 @@ print(timestamps)
 
 current_timestamp = Timestamp_Item("## 14.04.2019 - 12:00 # B # Test-Beispiel") # ES DÜRFEN KEINE ANFANGSZEICHEN WIE ## DURCHGELASEN WERDEN
 current_timestamp.check_entries()
+print(current_timestamp.check_projectname(timestamps))
 
 
 
