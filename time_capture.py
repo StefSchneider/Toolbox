@@ -54,7 +54,8 @@ Github: StefSchneider
 ## 30.04.2019 # 8:15  # E
 ## 1.5.2019 # 11:00 # A # Definition Exceptions und Check Projektname
 ## 1.5.2019 # 12:00 # E
-##
+## 2.5.2019 # 8:10 # A
+## 2.5.2019 # 8:20 # E
 
 
 
@@ -125,6 +126,7 @@ SYNONYM_END: set = {"e", "E", "End", "end", "Ende", "ende", "ENDE", "close", "Cl
 TIME_RESOLUTION: int = 15
 MAX_HOURS: int = 24 # maximum hours allowed between start und end of a timestamp
 SECTION_TO_SHOW: int = 5 # number of date lines shown in case of start/end-Error
+SEQUENCE_TIMESTAMP: tuple = (date, time, blocksignal, part_description) # orders sequence of timestamp input
 
 projectname: str = ""
 found_projectname: bool = False # set on True if projectname is extracted from comment lines, else raise exception
@@ -223,6 +225,16 @@ class File(object):
         pass
 
 
+"""
+Reihenfolge für Timestamp-Überprüfungen:
+1. check_entries: steuert die Überprüfungen der timestamp-Einträge
+2. check_projectname: überprüft, ob der Projektname in den Daten vorhanden ist, andernfalls wird der User aufgefordert, diesen zu ergänzen, liefert Projectnamen zurück
+3. check_date: überprüft die Richtigkeit und Plausibilität des Datumseintrags, liefert das richige Datum im Iso-Format zurück
+4. check_time: überprüft die Richtigkeit und Plausibilität des Zeiteintrags, liefert den Zeiteintrag im Iso-Format zurück
+4. check_blocksignal: überprüft die Richtigkeit des Anfangs- und Endsignals. ACHTUNG: Liste der Timestamp-Einträge muss dazu vorher noch Datum und Uhrzeit richtig sortiert sein
+
+"""
+
 class Timestamp_Item:
     """
     Liest und erfasst alle Daten, die für die gesammelte Zeiterfassung nötig sind
@@ -242,15 +254,6 @@ class Timestamp_Item:
         """
         pass
 
-    def parse_timestamp_data(line_in: str) -> typing.Tuple[str, datetime.date, datetime.time, str]:
-        """
-        divides comment lines in project name or time data
-        :param: line: current line of original file to analyze
-        :return: project name, date, time, start or end of timestamp
-        """
-        self.line_in = line_in
-        self.line_in = any(self.line_in.split(divider) for divider in DIVIDE_SIGNS)
-        pass
 
 
     def check_entries(self):
@@ -385,6 +388,17 @@ def show_error_message(error_message: str):
     ]
     window = sg.Window("ERROR").Layout(layout)
     error_button, values = window.Read()
+
+
+def parse_timestamp_data(line_in: str) -> list:
+    """
+    divides comment lines in project name or time data
+    :param: line: current line of original file to analyze
+    :return: list of timestamp date, time, start or end of timestamp and description of project part
+    """
+    self.line_in = line_in
+    self.line_in = any(self.line_in.split(divider) for divider in DIVIDE_SIGNS)
+    pass
 
 
 # main program
