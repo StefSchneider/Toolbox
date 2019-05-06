@@ -56,7 +56,8 @@ Github: StefSchneider
 ## 1.5.2019 # 12:00 # E
 ## 2.5.2019 # 8:10 # A
 ## 2.5.2019 # 8:20 # E
-
+## 6.5.2019 # 7:45 # A # Transition timestamp tuple to positions in list
+## 6.5.2019 # 8:00 E
 
 
 
@@ -126,7 +127,7 @@ SYNONYM_END: set = {"e", "E", "End", "end", "Ende", "ende", "ENDE", "close", "Cl
 TIME_RESOLUTION: int = 15
 MAX_HOURS: int = 24 # maximum hours allowed between start und end of a timestamp
 SECTION_TO_SHOW: int = 5 # number of date lines shown in case of start/end-Error
-SEQUENCE_TIMESTAMP: tuple = (date, time, blocksignal, part_description) # orders sequence of timestamp input
+SEQUENCE_TIMESTAMP: tuple = ("date", "time", "blocksignal", "part_description") # orders sequence of timestamp input
 
 projectname: str = ""
 found_projectname: bool = False # set on True if projectname is extracted from comment lines, else raise exception
@@ -135,9 +136,14 @@ expected_addition: str = "" # what addition at timestamp is expected next, start
 filename_in: str = ""
 filename_out_timestamp: str = ""
 filename_out_code: str = ""
-timestamps: list = []
+raw_timestamps: list = []
 button_source_file: bool = False
 source_file: str = ""
+timestamp_item: list = ["", "", "", ""]
+pos_date: int = 0
+pos_time: int = 0
+pos_blocksignal: int = 0
+pos_part_description: int = 0
 
 
 class File(object):
@@ -398,10 +404,30 @@ def parse_timestamp_data(line_in: str) -> list:
     """
     self.line_in = line_in
     self.line_in = any(self.line_in.split(divider) for divider in DIVIDE_SIGNS)
-    pass
+    for marker in MARKS_TIMESTAMP:
+        self.line_in = self.line_in.strip(marker)
+    print(self.line_in)
+    parts = re.split(DIVIDE_SIGNS, self.line_in)
+    print(parts, len(parts))
+    for i, part in enumerate(parts):
+        parts[i] = parts[i].strip(" ")
+    print(parts)
 
 
 # main program
+for i, elements in enumerate(SEQUENCE_TIMESTAMP):
+    if elements == "date":
+        pos_date = i
+    elif elements == "time":
+        pos_time = i
+    elif elements == "blocksignal":
+        pos_blocksignal = i
+    elif elements == "part_description":
+        pos_part_description = i
+
+print(pos_date, pos_time, pos_blocksignal, pos_part_description)
+
+
 while not button_source_file:
     while source_file == "":
         sg.ChangeLookAndFeel("TealMono")
@@ -449,11 +475,11 @@ while not button_source_file:
                 break
         for line in fobj_in:
             if any(line.startswith(marks) for marks in MARKS_TIMESTAMP):
-                timestamps.append([line])
+                raw_timestamps.append([line])
             else:
                 fobj_out_code.writelines(line)
 
-print(timestamps)
+print(raw_timestamps)
 
 current_timestamp = Timestamp_Item("## 14.04.2019 - 12:00 # B # Test-Beispiel") # ES DÜRFEN KEINE ANFANGSZEICHEN WIE ## DURCHGELASEN WERDEN
 current_timestamp.check_entries()
