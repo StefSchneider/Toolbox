@@ -63,6 +63,9 @@ Github: StefSchneider
 ## 13.5.2019 # 7:40 # A # including library pathlib
 ## 13.5.2019 # 8:07 # E
 ## 14.5.2019 # 7:30 # A
+## 14.5.2019 # 8:15 # E
+## 14.4.2019 # 21:03 # A
+## 14.4.2019 # 21.18 # E
 
 
 """
@@ -224,17 +227,16 @@ class File(object):
         new_path = self.file_data[0].joinpath(PATH)
         print("new path:", new_path)
         if PATH != "":
-            print(self.file_data[0].joinpath(PATH))
+            print(new_path)
             try:
                 new_path.mkdir()
             except FileExistsError:
                 pass
 
         return (
-                self.file_data[0].joinpath() + "/" + self.file_data[1] + EXTENSION_FILENAME_TIMESTAMP + "." + file_prefix,
-                self.file_data[0] + "/" + self.file_data[1] + EXTENSION_FILENAME_CODE + "." +
-                FILEEXTENSIONS[EXTENSION_FILENAME_CODE][0]
-        )
+                str(new_path) + "\\" + self.filename + EXTENSION_FILENAME_TIMESTAMP + "." + file_prefix,
+                str(new_path) + "\\" + self.filename + EXTENSION_FILENAME_CODE + "." + FILEEXTENSIONS[EXTENSION_FILENAME_CODE][0]
+         )
 
 
     def overwrite_file(self, file_data: typing.Tuple[str, str], code: list = []):
