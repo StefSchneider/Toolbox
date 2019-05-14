@@ -58,7 +58,11 @@ Github: StefSchneider
 ## 2.5.2019 # 8:20 # E
 ## 6.5.2019 # 7:45 # A # Transition timestamp tuple to positions in list
 ## 6.5.2019 # 8:00 E
-
+## 12.5.2019 # 15:03 # A
+## 12.5.2019 # 15:32 # E
+## 13.5.2019 # 7:40 # A # including library pathlib
+## 13.5.2019 # 8:07 # E
+## 14.5.2019 # 7:30 # A
 
 
 """
@@ -112,12 +116,14 @@ from datetime import datetime
 import typing
 import PySimpleGUI as sg
 import re
+import pathlib
 
 EXTENSION_FILENAME_TIMESTAMP: str = "_timestamp" # extension for new filename with timestamp data
 EXTENSION_FILENAME_CODE: str = "_code" # extension for new filename without timestamp data
 FILEEXTENSIONS: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
                         EXTENSION_FILENAME_CODE: ("py",)
                         }
+PATH = "timestamp"
 MARKS_TIMESTAMP: tuple = ("##", "#@", "#T") # add more if needed
 DIVIDE_SIGNS = re.compile("[/|\-|\^|#|\*]") # group for regular expressions, add more if needed
 DATE_SPLIT_SIGNS: tuple = (":", ".", ("/")) # add more if needed
@@ -173,14 +179,15 @@ class File(object):
         zerlegt die Eingangsdatei in ihre Bestandteile filepath und filename
         :return: tuple of filepath, filename and fileextension
         """
-        self.filename_in = filename_in
-        self.filepath, self.filename = self.filename_in.rsplit("/",1)
-        self.filename, self.fileextension = self.filename.rsplit(".",1)
+        self.filepath = pathlib.Path(filename_in).parent
+        self.filename = pathlib.Path(filename_in).stem
+        self.filesuffix = pathlib.Path(filename_in).suffix
+        print(type(self.filepath), type(self.filename), type(self.filesuffix))
 
-        return (self.filepath, self.filename, self.fileextension)
+        return (self.filepath, self.filename, self.filesuffix)
 
 
-    def create_files(self, file_data: typing.Tuple[str, str, str]) -> typing.Tuple[str, str]:
+    def create_files(self, file_data: typing.Tuple[pathlib.Path, str, str]) -> typing.Tuple[str, str]:
         """
         legt eine neue Datei an und speichert sie im gleichen Dateeipfad
         :return: complete filename of file with code and file with timestamps
@@ -194,6 +201,7 @@ class File(object):
         ## 22.04.2019 # 19:52 # S
         ## 22.04.2019 # 21.17 # E
         self.file_data = file_data
+        print("self.file_data[1]", self.file_data[1])
         button_format: bool = False
         file_prefix: str = ""
         while button_format != "Submit":
@@ -212,9 +220,18 @@ class File(object):
                         file_prefix = FILEEXTENSIONS[EXTENSION_FILENAME_TIMESTAMP][i]
             else:
                 show_error_message("Can't start file without format!")
+        print("self.file_data[0]", self.file_data[0])
+        new_path = self.file_data[0].joinpath(PATH)
+        print("new path:", new_path)
+        if PATH != "":
+            print(self.file_data[0].joinpath(PATH))
+            try:
+                new_path.mkdir()
+            except FileExistsError:
+                pass
 
         return (
-                self.file_data[0] + "/" + self.file_data[1] + EXTENSION_FILENAME_TIMESTAMP + "." + file_prefix,
+                self.file_data[0].joinpath() + "/" + self.file_data[1] + EXTENSION_FILENAME_TIMESTAMP + "." + file_prefix,
                 self.file_data[0] + "/" + self.file_data[1] + EXTENSION_FILENAME_CODE + "." +
                 FILEEXTENSIONS[EXTENSION_FILENAME_CODE][0]
         )
