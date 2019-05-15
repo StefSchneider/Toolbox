@@ -64,8 +64,10 @@ Github: StefSchneider
 ## 13.5.2019 # 8:07 # E
 ## 14.5.2019 # 7:30 # A
 ## 14.5.2019 # 8:15 # E
-## 14.4.2019 # 21:03 # A
-## 14.4.2019 # 21.18 # E
+## 14.5.2019 # 21:03 # A
+## 14.5.2019 # 21.18 # E
+## 15.5.2019 # 20:55 # A
+## 15.5.2019 # 21:30 # E
 
 
 """
@@ -177,7 +179,7 @@ class File(object):
         return self.filename_in
 
 
-    def parse_filename(self, filename_in: str) -> typing.Tuple[str, str, str]:
+    def parse_filename(self, filename_in: str) -> typing.Tuple[pathlib.Path, str, str]:
         """
         zerlegt die Eingangsdatei in ihre Bestandteile filepath und filename
         :return: tuple of filepath, filename and fileextension
@@ -185,12 +187,12 @@ class File(object):
         self.filepath = pathlib.Path(filename_in).parent
         self.filename = pathlib.Path(filename_in).stem
         self.filesuffix = pathlib.Path(filename_in).suffix
-        print(type(self.filepath), type(self.filename), type(self.filesuffix))
+        print("Types parse_filename:", type(self.filepath), type(self.filename), type(self.filesuffix))
 
         return (self.filepath, self.filename, self.filesuffix)
 
 
-    def create_files(self, file_data: typing.Tuple[pathlib.Path, str, str]) -> typing.Tuple[str, str]:
+    def create_files(self, file_data: typing.Tuple[pathlib.Path, str, str]) -> typing.Tuple[pathlib.Path, pathlib.Path]:
         """
         legt eine neue Datei an und speichert sie im gleichen Dateeipfad
         :return: complete filename of file with code and file with timestamps
@@ -234,8 +236,10 @@ class File(object):
                 pass
 
         return (
-                str(new_path) + "\\" + self.filename + EXTENSION_FILENAME_TIMESTAMP + "." + file_prefix,
-                str(new_path) + "\\" + self.filename + EXTENSION_FILENAME_CODE + "." + FILEEXTENSIONS[EXTENSION_FILENAME_CODE][0]
+            new_path.joinpath(self.filename + EXTENSION_FILENAME_TIMESTAMP + "." + file_prefix),
+            new_path.joinpath(self.filename + EXTENSION_FILENAME_CODE + "." + FILEEXTENSIONS[EXTENSION_FILENAME_CODE][0])
+#                str(new_path) + "\\" + self.filename + EXTENSION_FILENAME_TIMESTAMP + "." + file_prefix,
+#                str(new_path) + "\\" + self.filename + EXTENSION_FILENAME_CODE + "." + FILEEXTENSIONS[EXTENSION_FILENAME_CODE][0]
          )
 
 
@@ -444,9 +448,6 @@ for i, elements in enumerate(SEQUENCE_TIMESTAMP):
     elif elements == "part_description":
         pos_part_description = i
 
-print(pos_date, pos_time, pos_blocksignal, pos_part_description)
-
-
 while not button_source_file:
     while source_file == "":
         sg.ChangeLookAndFeel("TealMono")
@@ -468,7 +469,8 @@ while not button_source_file:
             show_error_message("Can't find file!")
     if button_source_file == "Cancel":
         break
-    print("Source:", source_file)
+    source_file.pathlib.Path.cwd()
+    print("Source:", source_file, type(source_file))
     file_input = File()
     file_in_data = file_input.parse_filename(source_file)
     print(file_in_data)
@@ -476,9 +478,9 @@ while not button_source_file:
     print(filename_out_timestamp)
     print(filename_out_code)
     # split code and timestamps in file and list
-    with open(source_file, "r") as fobj_in:
+    with source_file.open(mode = "r") as fobj_in:
         try:
-            fobj_out_code = open(filename_out_code, "x")
+            fobj_out_code.open(mode = "x")
         except FileExistsError:
             sg.ChangeLookAndFeel("TealMono")
             layout = [
@@ -488,7 +490,7 @@ while not button_source_file:
             ]
             (button, values) = sg.Window("File owerwriting").Layout(layout).Read()
             if button == "Yes":
-                fobj_out_code = open(filename_out_code, "w")
+                fobj_out_code.open(mode = "w")
             else:
                 show_error_message("Finish program without result")
                 break
