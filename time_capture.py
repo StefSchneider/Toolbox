@@ -68,6 +68,12 @@ Github: StefSchneider
 ## 14.5.2019 # 21.18 # E
 ## 15.5.2019 # 20:55 # A
 ## 15.5.2019 # 21:30 # E
+## 16.5.2019 # 20:26 # A
+## 16.5.2019 # 21:20 # E
+## 20.5.2019 # 20:45 # A
+## 20.5.2019 # 21:20 # E
+## 21.05.2019 # 20:23 # A #code refactoring
+## 21.05.2019 # 20:51 # E
 
 
 """
@@ -125,10 +131,10 @@ import pathlib
 
 EXTENSION_FILENAME_TIMESTAMP: str = "_timestamp" # extension for new filename with timestamp data
 EXTENSION_FILENAME_CODE: str = "_code" # extension for new filename without timestamp data
-FILEEXTENSIONS: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
+FILESUFFIXES: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
                         EXTENSION_FILENAME_CODE: ("py",)
                         }
-PATH = "timestamp"
+NEW_DIRECTORY_PATH = "timestamp" # for new directory
 MARKS_TIMESTAMP: tuple = ("##", "#@", "#T") # add more if needed
 DIVIDE_SIGNS = re.compile("[/|\-|\^|#|\*]") # group for regular expressions, add more if needed
 DATE_SPLIT_SIGNS: tuple = (":", ".", ("/")) # add more if needed
@@ -155,6 +161,8 @@ pos_date: int = 0
 pos_time: int = 0
 pos_blocksignal: int = 0
 pos_part_description: int = 0
+code_lines: str = "" # collects all lines of code for writing into fobj_out_code
+timestamp_line: str = "" # # collects all lines of code for writing into fobj_out_timestamps
 
 
 class File(object):
@@ -187,7 +195,6 @@ class File(object):
         self.filepath = pathlib.Path(filename_in).parent
         self.filename = pathlib.Path(filename_in).stem
         self.filesuffix = pathlib.Path(filename_in).suffix
-        print("Types parse_filename:", type(self.filepath), type(self.filename), type(self.filesuffix))
 
         return (self.filepath, self.filename, self.filesuffix)
 
@@ -206,15 +213,14 @@ class File(object):
         ## 22.04.2019 # 19:52 # S
         ## 22.04.2019 # 21.17 # E
         self.file_data = file_data
-        print("self.file_data[1]", self.file_data[1])
         button_format: bool = False
-        file_prefix: str = ""
+        file_suffix: str = ""
         while button_format != "Submit":
             sg.ChangeLookAndFeel("TealMono")
             layout = [
                 [sg.Text("Output timestamp data in format:", font=("Arial", 10))],
-                [sg.Radio(FILEEXTENSIONS[EXTENSION_FILENAME_TIMESTAMP][i], "fileformat", default=(True if i == 0 else False))
-                 for i, elements in enumerate(FILEEXTENSIONS[EXTENSION_FILENAME_TIMESTAMP])],
+                [sg.Radio(FILESUFFIXES[EXTENSION_FILENAME_TIMESTAMP][i], "fileformat", default=(True if i == 0 else False))
+                 for i, elements in enumerate(FILESUFFIXES[EXTENSION_FILENAME_TIMESTAMP])],
                 [sg.Submit(), sg.Cancel()]
             ]
             window = sg.Window("Test Format").Layout(layout)
@@ -222,24 +228,19 @@ class File(object):
             if button_format == "Submit":
                 for i, value in enumerate(values):
                     if value == True:
-                        file_prefix = FILEEXTENSIONS[EXTENSION_FILENAME_TIMESTAMP][i]
+                        file_suffix = FILESUFFIXES[EXTENSION_FILENAME_TIMESTAMP][i]
             else:
                 show_error_message("Can't start file without format!")
-        print("self.file_data[0]", self.file_data[0])
-        new_path = self.file_data[0].joinpath(PATH)
-        print("new path:", new_path)
-        if PATH != "":
-            print(new_path)
+        new_path = self.file_data[0].joinpath(NEW_DIRECTORY_PATH)
+        if NEW_DIRECTORY_PATH != "":
             try:
                 new_path.mkdir()
             except FileExistsError:
                 pass
 
         return (
-            new_path.joinpath(self.filename + EXTENSION_FILENAME_TIMESTAMP + "." + file_prefix),
-            new_path.joinpath(self.filename + EXTENSION_FILENAME_CODE + "." + FILEEXTENSIONS[EXTENSION_FILENAME_CODE][0])
-#                str(new_path) + "\\" + self.filename + EXTENSION_FILENAME_TIMESTAMP + "." + file_prefix,
-#                str(new_path) + "\\" + self.filename + EXTENSION_FILENAME_CODE + "." + FILEEXTENSIONS[EXTENSION_FILENAME_CODE][0]
+            new_path.joinpath(self.filename + EXTENSION_FILENAME_TIMESTAMP + "." + file_suffix),
+            new_path.joinpath(self.filename + EXTENSION_FILENAME_CODE + "." + FILESUFFIXES[EXTENSION_FILENAME_CODE][0])
          )
 
 
@@ -438,7 +439,7 @@ def parse_timestamp_data(line_in: str) -> list:
 
 
 # main program
-for i, elements in enumerate(SEQUENCE_TIMESTAMP):
+for i, elements in enumerate(SEQUENCE_TIMESTAMP): # checks sequence of timestamp data
     if elements == "date":
         pos_date = i
     elif elements == "time":
@@ -456,7 +457,8 @@ while not button_source_file:
             [sg.InputText(), sg.FileBrowse()],
             [sg.Submit("Submit"), sg.Cancel("Cancel")]
         ]
-        (button_source_file, (source_file,)) = sg.Window("Capture Timestamp").Layout(layout).Read()
+        window = sg.Window("Capture Timestamp").Layout(layout)
+        (button_source_file, (source_file,)) = window.Read()
         try:
             fobj = open(source_file)
         except FileNotFoundError:
@@ -469,23 +471,19 @@ while not button_source_file:
             show_error_message("Can't find file!")
     if button_source_file == "Cancel":
         break
-    source_file.pathlib.Path.cwd()
-    print("Source:", source_file, type(source_file))
+    source_file = pathlib.Path(source_file)
     file_input = File()
     file_in_data = file_input.parse_filename(source_file)
-    print(file_in_data)
-    filename_out_timestamp, filename_out_code = file_input.create_files(file_in_data)
-    print(filename_out_timestamp)
-    print(filename_out_code)
-    # split code and timestamps in file and list
+    fobj_out_timestamp, fobj_out_code = file_input.create_files(file_in_data)
+
     with source_file.open(mode = "r") as fobj_in:
         try:
             fobj_out_code.open(mode = "x")
         except FileExistsError:
             sg.ChangeLookAndFeel("TealMono")
             layout = [
-                [sg.Text(f"\'{filename_out_code}\' already exists.")],
-                [sg.Text(f"Overwrite file \'{filename_out_code}\'?")],
+                [sg.Text(f"\'{fobj_out_code}\' already exists.")],
+                [sg.Text(f"Overwrite file \'{fobj_out_code}\'?")],
                 [sg.Ok("Yes"), sg.Cancel("No")]
             ]
             (button, values) = sg.Window("File owerwriting").Layout(layout).Read()
@@ -494,11 +492,13 @@ while not button_source_file:
             else:
                 show_error_message("Finish program without result")
                 break
-        for line in fobj_in:
-            if any(line.startswith(marks) for marks in MARKS_TIMESTAMP):
+
+        for line in fobj_in: # split code and timestamps in file and list
+            if any(line.lstrip(" ").startswith(marks) for marks in MARKS_TIMESTAMP):
                 raw_timestamps.append([line])
             else:
-                fobj_out_code.writelines(line)
+                code_lines += line
+        fobj_out_code.write_text(code_lines)
 
 print(raw_timestamps)
 
@@ -522,3 +522,4 @@ Hauptprogrammfehlt noch:
  #       return new_date
     pass
 """
+# End of Code
