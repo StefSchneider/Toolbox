@@ -74,6 +74,8 @@ Github: StefSchneider
 ## 20.5.2019 # 21:20 # E
 ## 21.05.2019 # 20:23 # A #code refactoring
 ## 21.05.2019 # 20:51 # E
+## 22.5.2019 # 07:28 # A
+## 22.5.2019 # 8:04 # E
 
 
 """
@@ -132,9 +134,9 @@ import pathlib
 EXTENSION_FILENAME_TIMESTAMP: str = "_timestamp" # extension for new filename with timestamp data
 EXTENSION_FILENAME_CODE: str = "_code" # extension for new filename without timestamp data
 FILESUFFIXES: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
-                        EXTENSION_FILENAME_CODE: ("py",)
+                      EXTENSION_FILENAME_CODE: ("py",)
                         }
-NEW_DIRECTORY_PATH = "timestamp" # for new directory
+NEW_DIRECTORY_PATH = "timestamp" # name of new directory
 MARKS_TIMESTAMP: tuple = ("##", "#@", "#T") # add more if needed
 DIVIDE_SIGNS = re.compile("[/|\-|\^|#|\*]") # group for regular expressions, add more if needed
 DATE_SPLIT_SIGNS: tuple = (":", ".", ("/")) # add more if needed
@@ -175,7 +177,7 @@ class File(object):
         """
         self.filepath: str = "path"
         self.filename: str = "name"
-        self.fileextension: str = "extension"
+        self.filesuffix: str = "extension"
 
 
     def __str__(self):
@@ -190,7 +192,7 @@ class File(object):
     def parse_filename(self, filename_in: str) -> typing.Tuple[pathlib.Path, str, str]:
         """
         zerlegt die Eingangsdatei in ihre Bestandteile filepath und filename
-        :return: tuple of filepath, filename and fileextension
+        :return: tuple of filepath, filename and filesuffix
         """
         self.filepath = pathlib.Path(filename_in).parent
         self.filename = pathlib.Path(filename_in).stem
@@ -284,6 +286,24 @@ class Timestamp_Item:
         """
         pass
 
+    def parse_timestamp_data(self) -> list:
+        """
+        divides comment lines in project name or time data
+        :param: line: current line of original file to analyze
+        :return: list of timestamp date, time, start or end of timestamp and description of project part
+        """
+        print(self.line_in)
+        self.line_in = any(self.line_in.split(divider) for divider in DIVIDE_SIGNS)
+        for marker in MARKS_TIMESTAMP:
+            self.line_in = self.line_in.strip(marker)
+        print(self.line_in)
+        parts = re.split(DIVIDE_SIGNS, self.line_in)
+        print(parts, len(parts))
+        for i, part in enumerate(parts):
+            parts[i] = parts[i].strip(" ")
+        print(parts)
+
+        return parts
 
 
     def check_entries(self):
@@ -420,25 +440,8 @@ def show_error_message(error_message: str):
     error_button, values = window.Read()
 
 
-def parse_timestamp_data(line_in: str) -> list:
-    """
-    divides comment lines in project name or time data
-    :param: line: current line of original file to analyze
-    :return: list of timestamp date, time, start or end of timestamp and description of project part
-    """
-    self.line_in = line_in
-    self.line_in = any(self.line_in.split(divider) for divider in DIVIDE_SIGNS)
-    for marker in MARKS_TIMESTAMP:
-        self.line_in = self.line_in.strip(marker)
-    print(self.line_in)
-    parts = re.split(DIVIDE_SIGNS, self.line_in)
-    print(parts, len(parts))
-    for i, part in enumerate(parts):
-        parts[i] = parts[i].strip(" ")
-    print(parts)
-
-
 # main program
+
 for i, elements in enumerate(SEQUENCE_TIMESTAMP): # checks sequence of timestamp data
     if elements == "date":
         pos_date = i
@@ -502,7 +505,8 @@ while not button_source_file:
 
 print(raw_timestamps)
 
-current_timestamp = Timestamp_Item("## 14.04.2019 - 12:00 # B # Test-Beispiel") # ES DÜRFEN KEINE ANFANGSZEICHEN WIE ## DURCHGELASEN WERDEN
+current_timestamp = Timestamp_Item(str(raw_timestamps[9])) # ES DÜRFEN KEINE ANFANGSZEICHEN WIE ## DURCHGELASEN WERDEN
+current_timestamp.parse_timestamp_data()
 current_timestamp.check_entries()
 print(current_timestamp.check_projectname(timestamps))
 
