@@ -138,7 +138,7 @@ FILESUFFIXES: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
                         }
 NEW_DIRECTORY_PATH = "timestamp" # name of new directory
 MARKS_TIMESTAMP: tuple = ("##", "#@", "#T") # add more if needed
-DIVIDE_SIGNS = re.compile("[/|\-|\^|#|\*]") # group for regular expressions, add more if needed
+DIVIDE_SIGNS = re.compile("[/|\^|#|\*]") # group for regular expressions, add more if needed
 DATE_SPLIT_SIGNS: tuple = (":", ".", ("/")) # add more if needed
 SYNONYM_START: set = {"s", "S", "start", "Start", "START", "b", "B", "begin", "Beginn", "beginn", "BEGIN", "BEGINN",
                       "Anfang", "anfang", "ANFANG", "a", "A", "open", "OPEN", "Open", "o", "O"}
@@ -286,14 +286,15 @@ class Timestamp_Item:
         """
         pass
 
+
     def parse_timestamp_data(self) -> list:
         """
         divides comment lines in project name or time data
         :param: line: current line of original file to analyze
         :return: list of timestamp date, time, start or end of timestamp and description of project part
         """
-        print(self.line_in)
-        self.line_in = any(self.line_in.split(divider) for divider in DIVIDE_SIGNS)
+        print("self.line_in", self.line_in, type(self.line_in))
+        split_line_in = DIVIDE_SIGNS.split(self.line_in)
         for marker in MARKS_TIMESTAMP:
             self.line_in = self.line_in.strip(marker)
         print(self.line_in)
