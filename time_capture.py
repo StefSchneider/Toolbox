@@ -76,6 +76,8 @@ Github: StefSchneider
 ## 21.05.2019 # 20:51 # E
 ## 22.5.2019 # 07:28 # A
 ## 22.5.2019 # 8:04 # E
+## 26.5.2019 # 17:10 # A
+## 26.5.2019 # 17:46 # E
 
 
 """
@@ -294,10 +296,15 @@ class Timestamp_Item:
         :return: list of timestamp date, time, start or end of timestamp and description of project part
         """
         print("self.line_in", self.line_in, type(self.line_in))
-        split_line_in = DIVIDE_SIGNS.split(self.line_in)
         for marker in MARKS_TIMESTAMP:
-            self.line_in = self.line_in.strip(marker)
-        print(self.line_in)
+            print(marker, type(marker))
+            self.line_in = self.line_in.lstrip(marker)
+            print(self.line_in)
+        print("self.line_in after lstrip:", self.line_in)
+        split_line_in = DIVIDE_SIGNS.split(self.line_in)
+        print("split line in", split_line_in)
+
+ #       print(self.line_in)
         parts = re.split(DIVIDE_SIGNS, self.line_in)
         print(parts, len(parts))
         for i, part in enumerate(parts):
@@ -509,7 +516,7 @@ print(raw_timestamps)
 current_timestamp = Timestamp_Item(str(raw_timestamps[9])) # ES DÜRFEN KEINE ANFANGSZEICHEN WIE ## DURCHGELASEN WERDEN
 current_timestamp.parse_timestamp_data()
 current_timestamp.check_entries()
-print(current_timestamp.check_projectname(timestamps))
+#print(current_timestamp.check_projectname(timestamps))
 
 
 
