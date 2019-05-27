@@ -80,6 +80,10 @@ Github: StefSchneider
 ## 26.5.2019 # 17:46 # E
 ## 27.5.2019 # 8:10 # A
 ## 27.5.2019 # 8:23 # E
+## 27.5.2019 # 20:25 # A
+## 27.5.2019 # 20:53 # E
+
+
 
 
 """
@@ -297,22 +301,13 @@ class Timestamp_Item:
         :param: line: current line of original file to analyze
         :return: list of timestamp date, time, start or end of timestamp and description of project part
         """
-        string = self.line_in
-        print("string", string, type(string))
         for marker in MARKS_TIMESTAMP:
-            print(marker, type(marker))
-            string = string.lstrip(marker)
-            print(string)
-        print("self.line_in after lstrip:", string)
-        split_line_in = DIVIDE_SIGNS.split(string)
-        print("split line in", split_line_in)
-
- #       print(self.line_in)
+            self.line_in = self.line_in.lstrip(marker)
+        self.line_in = self.line_in.rstrip("\n")
         parts = re.split(DIVIDE_SIGNS, self.line_in)
-        print(parts, len(parts))
         for i, part in enumerate(parts):
             parts[i] = parts[i].strip(" ")
-        print(parts)
+        print("parts:", parts)
 
         return parts
 
@@ -330,14 +325,8 @@ class Timestamp_Item:
         - zwischen Anfang und Ende liegen mehr als 24 Stunden (kann über Konstante gesteuert werden)
         :return: True oder False sowie die mögliche Fehlerstelle
         """
-        for marker in MARKS_TIMESTAMP:
-            self.line_in = self.line_in.strip(marker)
-        print(self.line_in)
-        parts = re.split(DIVIDE_SIGNS, self.line_in)
-        print(parts, len(parts))
-        for i, part in enumerate(parts):
-            parts[i] = parts[i].strip(" ")
-        print(parts)
+        pass
+
 
 
     def check_projectname(self, timestamps: list) -> str:
@@ -516,7 +505,11 @@ while not button_source_file:
 
 print(raw_timestamps)
 
-current_timestamp = Timestamp_Item(str(raw_timestamps[9])) # ES DÜRFEN KEINE ANFANGSZEICHEN WIE ## DURCHGELASEN WERDEN
+example: str = raw_timestamps[9][0]
+print(example)
+
+
+current_timestamp = Timestamp_Item(example) # ES DÜRFEN KEINE ANFANGSZEICHEN WIE ## DURCHGELASEN WERDEN
 current_timestamp.parse_timestamp_data()
 current_timestamp.check_entries()
 #print(current_timestamp.check_projectname(timestamps))
