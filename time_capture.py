@@ -78,6 +78,8 @@ Github: StefSchneider
 ## 22.5.2019 # 8:04 # E
 ## 26.5.2019 # 17:10 # A
 ## 26.5.2019 # 17:46 # E
+## 27.5.2019 # 8:10 # A
+## 27.5.2019 # 8:23 # E
 
 
 """
@@ -295,13 +297,14 @@ class Timestamp_Item:
         :param: line: current line of original file to analyze
         :return: list of timestamp date, time, start or end of timestamp and description of project part
         """
-        print("self.line_in", self.line_in, type(self.line_in))
+        string = self.line_in
+        print("string", string, type(string))
         for marker in MARKS_TIMESTAMP:
             print(marker, type(marker))
-            self.line_in = self.line_in.lstrip(marker)
-            print(self.line_in)
-        print("self.line_in after lstrip:", self.line_in)
-        split_line_in = DIVIDE_SIGNS.split(self.line_in)
+            string = string.lstrip(marker)
+            print(string)
+        print("self.line_in after lstrip:", string)
+        split_line_in = DIVIDE_SIGNS.split(string)
         print("split line in", split_line_in)
 
  #       print(self.line_in)
