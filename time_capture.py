@@ -82,6 +82,8 @@ Github: StefSchneider
 ## 27.5.2019 # 8:23 # E
 ## 27.5.2019 # 20:25 # A
 ## 27.5.2019 # 20:53 # E
+## 28.5.2019 # 20:22 # A
+## 28.5.2019 # 20:43 # E
 
 
 
@@ -154,7 +156,11 @@ SYNONYM_END: set = {"e", "E", "End", "end", "Ende", "ende", "ENDE", "close", "Cl
 TIME_RESOLUTION: int = 15
 MAX_HOURS: int = 24 # maximum hours allowed between start und end of a timestamp
 SECTION_TO_SHOW: int = 5 # number of date lines shown in case of start/end-Error
-SEQUENCE_TIMESTAMP: tuple = ("date", "time", "blocksignal", "part_description") # orders sequence of timestamp input
+SEQUENCE_TIMESTAMP: dict = {"date": 0,  # key: content; value: position in timestamp entries
+                            "time": 1,
+                            "blocksignal": 2,
+                            "part_description": 3
+                            } # orders sequence of timestamp input
 
 projectname: str = ""
 found_projectname: bool = False # set on True if projectname is extracted from comment lines, else raise exception
@@ -325,6 +331,8 @@ class Timestamp_Item:
         - zwischen Anfang und Ende liegen mehr als 24 Stunden (kann über Konstante gesteuert werden)
         :return: True oder False sowie die mögliche Fehlerstelle
         """
+
+        # BEI DER REIHENFOLGE DER DATEN ÜBER DICTIONARY SEQUENCE_ZIMESTAMP GEHEN!!!!!
         pass
 
 
@@ -440,17 +448,10 @@ def show_error_message(error_message: str):
     error_button, values = window.Read()
 
 
+
 # main program
 
-for i, elements in enumerate(SEQUENCE_TIMESTAMP): # checks sequence of timestamp data
-    if elements == "date":
-        pos_date = i
-    elif elements == "time":
-        pos_time = i
-    elif elements == "blocksignal":
-        pos_blocksignal = i
-    elif elements == "part_description":
-        pos_part_description = i
+
 
 while not button_source_file:
     while source_file == "":
@@ -506,7 +507,6 @@ while not button_source_file:
 print(raw_timestamps)
 
 example: str = raw_timestamps[9][0]
-print(example)
 
 
 current_timestamp = Timestamp_Item(example) # ES DÜRFEN KEINE ANFANGSZEICHEN WIE ## DURCHGELASEN WERDEN
