@@ -86,6 +86,8 @@ Github: StefSchneider
 ## 28.5.2019 # 20:43 # E
 ## 30.5.2019 # 13:08 # A
 ## 30.5.2019 # 13:33 # E
+## 30.5.2019 # 19:34 # A
+## 30.5.2019 # 20:27 # E
 
 
 
@@ -320,7 +322,7 @@ class Timestamp_Item:
         return parts
 
 
-    def check_entries(self, timestamp_parts: list):
+    def check_entries(self, line_in):
         """
         überprüft die Einträge auf richtige Schreibweise
         data.isoformat zur Umwandlung nutzen
@@ -333,12 +335,43 @@ class Timestamp_Item:
         - zwischen Anfang und Ende liegen mehr als 24 Stunden (kann über Konstante gesteuert werden)
         :return: True oder False sowie die mögliche Fehlerstelle
         """
+        if check_projectname(self.line_in) != None:
+            self.line_in.parse_timestamp_data()
 
         # BEI DER REIHENFOLGE DER DATEN ÜBER DICTIONARY SEQUENCE_ZIMESTAMP GEHEN!!!!!
-        pass
 
-
-
+    def check_projectname(self, line_in) -> str:
+        """
+        Überprüft, ob ein Projektname eingetragen ist,
+        falls nein, wird er abgefragt
+        :param timestamps: complete list of all timestamp comment lines
+        :return: projectname
+        """
+        self.timestamp_parts = timestamp_parts
+        projectnames: list = []
+        for elements in self.line_in:
+            if re.search(r"END OF CODE", elements[0].upper()):
+                if len(projectnames) == 1:
+                    projectname = projectnames[0]
+                    projectname = re.split("PROJECT", projectname.upper())
+                    projectname = projectname[1].strip(" ")
+                    projectname = projectname.strip(":")
+                else:
+                    button = "No"
+                    while button != "Submit":
+                        sg.ChangeLookAndFeel("TealMono")
+                        layout = [
+                            [sg.Text("No valid projectname found! Please add projectname.")],
+                            [sg.InputText("")],
+                            [sg.Submit("Submit"), sg.Cancel()]
+                        ]
+                        (button, values) = sg.Window("Projectname").Layout(layout).Read()
+                    projectname = values[0]
+                projectname = values[0]
+                return projectname
+            elif re.search(r"PROJECT", elements[0].upper()):
+                projectnames.append(elements[0])
+                return None
 
 
 
@@ -422,17 +455,17 @@ def show_error_message(error_message: str):
     window = sg.Window("ERROR").Layout(layout)
     error_button, values = window.Read()
 
-
+"""
 def check_projectname(timestamps: list) -> str:
-    """
+
     Überrpüft, ob ein Projektname eingetragen ist,
     falls nein, wird er abgefragt
     :param timestamps: complete list of all timestamp comment lines
     :return: projectname
-    """
+
     projectnames:list = []
     for elements in timestamps:
-        if re.search(r"project", elements[0]):
+        if re.search(r"PROJECT", elements[0].upper()):
             projectnames.append(elements[0])
     if len(projectnames) == 1:
         projectname = projectnames[0]
@@ -453,6 +486,7 @@ def check_projectname(timestamps: list) -> str:
 
     print("Projektname:", projectname)
     return projectname
+"""
 
 # main program
 
@@ -510,14 +544,21 @@ while not button_source_file:
         fobj_out_code.write_text(code_lines)
 
 print(raw_timestamps)
-check_projectname(raw_timestamps)
 
+for timestamp_entries in raw_timestamps:
+    current_timestamp = Timestamp_Item(timestamp_entries[0])
+    print(type(current_timestamp))
+    current_timestamp.check_entries()
+
+
+
+"""
 example: str = raw_timestamps[9][0]
 
 
 current_timestamp = Timestamp_Item(example) # ES DÜRFEN KEINE ANFANGSZEICHEN WIE ## DURCHGELASEN WERDEN
 current_timestamp.parse_timestamp_data()
-
+"""
 
 
 """
@@ -534,4 +575,4 @@ Hauptprogrammfehlt noch:
  #       return new_date
     pass
 """
-# End of Code
+## End of Code
