@@ -92,7 +92,7 @@ Github: StefSchneider
 ## 1.6.2019 # 16:43 # E
 ## 10.06.2019 # 10:10 # A
 ## 10.06.2019 # 10:57 # E
-
+## 10.6.2019 # 11:40 # a
 
 
 
@@ -189,7 +189,7 @@ pos_part_description: int = 0
 code_lines: str = "" # collects all lines of code for writing into fobj_out_code
 timestamp_line: str = "" # # collects all lines of code for writing into fobj_out_timestamps
 last_timestamp: bool = False
-list_parts: list = []
+list_parts: list = ["","","",""]
 
 
 class File(object):
@@ -330,20 +330,11 @@ class Timestamp_Item:
         """
         if self.check_projectname(self.line_in) != None:
             print("Check projectname successful")
-        print(SEQUENCE_TIMESTAMP["part_date"])
-        print(SEQUENCE_TIMESTAMP["part_time"])
-        print(SEQUENCE_TIMESTAMP["part_blocksignal"])
-        print(SEQUENCE_TIMESTAMP["part_description"])
-        print("self.timestamp_data",self.parse_timestamp_data())
-        print(self.parse_timestamp_data()[0][0])
-        print(self.parse_timestamp_data()[0][1])
-        print(self.parse_timestamp_data()[0][2])
-        print(self.parse_timestamp_data()[0][3])
 
-        list_parts[SEQUENCE_TIMESTAMP["part_date"]], \
-        list_parts[SEQUENCE_TIMESTAMP["part_time"]], \
-        list_parts[SEQUENCE_TIMESTAMP["part_blocksignal"]], \
-        list_parts[SEQUENCE_TIMESTAMP["part_description"]] = self.parse_timestamp_data()
+        list_parts[0] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_date"]]
+        list_parts[1] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_time"]]
+        list_parts[2] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_blocksignal"]]
+        list_parts[3] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_description"]]
 
         # BEI DER REIHENFOLGE DER DATEN ÜBER DICTIONARY SEQUENCE_ZIMESTAMP GEHEN!!!!!
 
@@ -361,7 +352,6 @@ class Timestamp_Item:
             parts.append("")
         for i, part in enumerate(parts):
             parts[i] = parts[i].strip(" ")
-        print("parts:", parts)
 
         return parts
 
@@ -571,11 +561,15 @@ while not button_source_file:
 
 print(raw_timestamps)
 
+
+current_timestamp = Timestamp_Item(raw_timestamps[9][0])
+current_timestamp.check_entries()
+
+
 for i, timestamp_entries in enumerate(raw_timestamps): # checks wether current timestamp is last timestamp in list
     if i == len(raw_timestamps)-1:
         last_timestamp = True
     current_timestamp = Timestamp_Item(timestamp_entries[0], last_timestamp)
-    print(type(current_timestamp))
     current_timestamp.check_entries()
 
 
