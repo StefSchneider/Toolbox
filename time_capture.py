@@ -88,6 +88,11 @@ Github: StefSchneider
 ## 30.5.2019 # 13:33 # E
 ## 30.5.2019 # 19:34 # A
 ## 30.5.2019 # 20:27 # E
+## 1.6.2019 # 16:33 # A
+## 1.6.2019 # 16:43 # E
+## 10.06.2019 # 10:10 # A
+## 10.06.2019 # 10:57 # E
+
 
 
 
@@ -160,9 +165,9 @@ SYNONYM_END: set = {"e", "E", "End", "end", "Ende", "ende", "ENDE", "close", "Cl
 TIME_RESOLUTION: int = 15
 MAX_HOURS: int = 24 # maximum hours allowed between start und end of a timestamp
 SECTION_TO_SHOW: int = 5 # number of date lines shown in case of start/end-Error
-SEQUENCE_TIMESTAMP: dict = {"date": 0,  # key: content; value: position in timestamp entries
-                            "time": 1,
-                            "blocksignal": 2,
+SEQUENCE_TIMESTAMP: dict = {"part_date": 0,  # key: content; value: position in timestamp entries
+                            "part_time": 1,
+                            "part_blocksignal": 2,
                             "part_description": 3
                             } # orders sequence of timestamp input
 
@@ -183,6 +188,8 @@ pos_blocksignal: int = 0
 pos_part_description: int = 0
 code_lines: str = "" # collects all lines of code for writing into fobj_out_code
 timestamp_line: str = "" # # collects all lines of code for writing into fobj_out_timestamps
+last_timestamp: bool = False
+list_parts: list = []
 
 
 class File(object):
@@ -290,11 +297,13 @@ class Timestamp_Item:
     Liest und erfasst alle Daten, die für die gesammelte Zeiterfassung nötig sind
     """
 
-    def __init__(self, line_in: str):
+    def __init__(self, line_in: str, last_entry: bool = False):
         """
         :param: line_in: complete line with data for timestamp
+        :param: last_entry: parameter for last timestamp entry in timestamp list, False except of last item in list
         """
         self.line_in: str = line_in
+        self.last_entry = last_entry
 
 
     def __str__(self):
@@ -305,24 +314,8 @@ class Timestamp_Item:
         pass
 
 
-    def parse_timestamp_data(self) -> list:
-        """
-        divides comment lines in project name or time data
-        :param: line: current line of original file to analyze
-        :return: list of timestamp date, time, start or end of timestamp and description of project part
-        """
-        for marker in MARKS_TIMESTAMP:
-            self.line_in = self.line_in.lstrip(marker)
-        self.line_in = self.line_in.rstrip("\n")
-        parts = re.split(DIVIDE_SIGNS, self.line_in)
-        for i, part in enumerate(parts):
-            parts[i] = parts[i].strip(" ")
-        print("parts:", parts)
 
-        return parts
-
-
-    def check_entries(self, line_in):
+    def check_entries(self):
         """
         überprüft die Einträge auf richtige Schreibweise
         data.isoformat zur Umwandlung nutzen
@@ -335,10 +328,44 @@ class Timestamp_Item:
         - zwischen Anfang und Ende liegen mehr als 24 Stunden (kann über Konstante gesteuert werden)
         :return: True oder False sowie die mögliche Fehlerstelle
         """
-        if check_projectname(self.line_in) != None:
-            self.line_in.parse_timestamp_data()
+        if self.check_projectname(self.line_in) != None:
+            print("Check projectname successful")
+        print(SEQUENCE_TIMESTAMP["part_date"])
+        print(SEQUENCE_TIMESTAMP["part_time"])
+        print(SEQUENCE_TIMESTAMP["part_blocksignal"])
+        print(SEQUENCE_TIMESTAMP["part_description"])
+        print("self.timestamp_data",self.parse_timestamp_data())
+        print(self.parse_timestamp_data()[0][0])
+        print(self.parse_timestamp_data()[0][1])
+        print(self.parse_timestamp_data()[0][2])
+        print(self.parse_timestamp_data()[0][3])
+
+        list_parts[SEQUENCE_TIMESTAMP["part_date"]], \
+        list_parts[SEQUENCE_TIMESTAMP["part_time"]], \
+        list_parts[SEQUENCE_TIMESTAMP["part_blocksignal"]], \
+        list_parts[SEQUENCE_TIMESTAMP["part_description"]] = self.parse_timestamp_data()
 
         # BEI DER REIHENFOLGE DER DATEN ÜBER DICTIONARY SEQUENCE_ZIMESTAMP GEHEN!!!!!
+
+
+    def parse_timestamp_data(self) -> list:
+        """
+        divides comment lines in project name or time data
+        :return: list of timestamp date, time, start or end of timestamp and description of project part
+        """
+        for marker in MARKS_TIMESTAMP:
+            self.line_in = self.line_in.lstrip(marker)
+        self.line_in = self.line_in.rstrip("\n")
+        parts = re.split(DIVIDE_SIGNS, self.line_in)
+        for i in range(0, 4-len(parts)):
+            parts.append("")
+        for i, part in enumerate(parts):
+            parts[i] = parts[i].strip(" ")
+        print("parts:", parts)
+
+        return parts
+
+
 
     def check_projectname(self, line_in) -> str:
         """
@@ -347,10 +374,9 @@ class Timestamp_Item:
         :param timestamps: complete list of all timestamp comment lines
         :return: projectname
         """
-        self.timestamp_parts = timestamp_parts
         projectnames: list = []
         for elements in self.line_in:
-            if re.search(r"END OF CODE", elements[0].upper()):
+            if self.last_entry == True:
                 if len(projectnames) == 1:
                     projectname = projectnames[0]
                     projectname = re.split("PROJECT", projectname.upper())
@@ -545,8 +571,10 @@ while not button_source_file:
 
 print(raw_timestamps)
 
-for timestamp_entries in raw_timestamps:
-    current_timestamp = Timestamp_Item(timestamp_entries[0])
+for i, timestamp_entries in enumerate(raw_timestamps): # checks wether current timestamp is last timestamp in list
+    if i == len(raw_timestamps)-1:
+        last_timestamp = True
+    current_timestamp = Timestamp_Item(timestamp_entries[0], last_timestamp)
     print(type(current_timestamp))
     current_timestamp.check_entries()
 
