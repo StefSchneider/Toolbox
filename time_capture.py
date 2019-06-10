@@ -6,6 +6,7 @@ Github: StefSchneider
 #@ project: TIME CAPTURE
 ## 14.04.2019 - 12:00 # B
 ## 14.04.2019 - 12:15 # Ende
+## 14.2019 - Kalendertest
 ## 14.04.2019 - 12:15 # B
 ## 14.04.2019 - 12:30 # E
 ## 14.04.2019 - 13:30 # Begin
@@ -98,6 +99,9 @@ Github: StefSchneider
 ## 10.6.2019 # 15:02 # E
 ## 10.6.2019 # 15:35 # A
 ## 10.6.2019 # 17:32 # E
+## 10.6.2019 # 20:32 # A
+## 10.6.2019 # 22.20 # E
+
 
 
 """
@@ -162,8 +166,8 @@ FILESUFFIXES: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
 NEW_DIRECTORY_PATH = "timestamp" # name of new directory
 MARKS_TIMESTAMP: tuple = ("##", "#@", "#T") # add more if needed
 DIVIDE_SIGNS_LINES = re.compile("[\^|#|\*|\-]") # group for regular expressions, add more if needed
-DIVIDE_SIGNS_DATE = re.compile("[:|.|/]")
-DATE_SIGNS = re.compile("[\d|DIVIDE_SIGNS_DATE]")
+DIVIDE_SIGNS_DATE = re.compile("[:|\.|/]")
+DATE_SIGNS = re.compile("([0-9]|:|\.|/)*")
 DATE_SPLIT_SIGNS: tuple = (":", ".", ("/")) # add more if needed
 SYNONYM_START: set = {"s", "S", "start", "Start", "START", "b", "B", "begin", "Beginn", "beginn", "BEGIN", "BEGINN",
                       "Anfang", "anfang", "ANFANG", "a", "A", "open", "OPEN", "Open", "o", "O"}
@@ -176,6 +180,10 @@ SEQUENCE_TIMESTAMP: dict = {"part_date": 0,  # key: content; value: position in 
                             "part_blocksignal": 2,
                             "part_description": 3
                             } # orders sequence of timestamp input
+SEQUENCE_DATE: dict = {"year": 2,
+                       "month": 1,
+                       "day": 0
+                       }
 
 projectname: str = ""
 found_projectname: bool = False # set on True if projectname is extracted from comment lines, else raise exception
@@ -330,15 +338,16 @@ class Timestamp_Item:
         - zwischen Anfang und Ende liegen mehr als 24 Stunden (kann über Konstante gesteuert werden)
         :return: True oder False sowie die mögliche Fehlerstelle
         """
-        if self.check_projectname(self.line_in) != None:
-            print("Check projectname successful")
 
         timestamp_items[0] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_date"]] # 1st: date
         timestamp_items[1] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_time"]] # 2nd: time
         timestamp_items[2] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_blocksignal"]] # 3rd: blocksignal
         timestamp_items[3] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_description"]] # 4th: description
-
         self.check_entry_date(timestamp_items[0])
+
+        if self.check_projectname(self.line_in) != None:
+            print("Check projectname successful")
+
 
 
     def parse_timestamp_data(self) -> list:
@@ -346,6 +355,7 @@ class Timestamp_Item:
         divides comment lines in project name or time data
         :return: list of timestamp date, time, start or end of timestamp and description of project part
         """
+        self.line_in = self.line_in.lstrip(" ")
         for marker in MARKS_TIMESTAMP:
             self.line_in = self.line_in.lstrip(marker)
         self.line_in = self.line_in.rstrip("\n")
@@ -354,7 +364,6 @@ class Timestamp_Item:
             parts.append("") # add empty strings to fill up parts
         for i, part in enumerate(parts):
             parts[i] = parts[i].strip(" ")
-            print(parts[i])
 
         return parts
 
@@ -408,16 +417,33 @@ class Timestamp_Item:
         """
         self.date_in = date_in
         timestamp_date: datetime.date(1, 1, 1)
-        part1: str = ""
-        part2: str = ""
-        part3: str = ""
+        invalid_date: bool = False
+        date_parts: list = []
         year: int = 1
         month: int = 1
         day: int = 1
-        print(self.date_in)
-        if re.match(DATE_SIGNS, self.date_in):
-            print("Match date")
-        # Bedingungen für richtigen Datumseintrag: besteht aus Zahlen und richtigen Dividern
+        if re.fullmatch(DATE_SIGNS, self.date_in):
+            date_parts = re.split(DIVIDE_SIGNS_DATE, self.date_in)
+            print(self.date_in, date_parts)
+            if len(date_parts) != 3 \
+                    or (int(date_parts[0]) > 12 and int(date_parts[1]) > 12 and int(date_parts[2] > 12)):
+                invalid_date = True
+            else:
+                year = int(date_parts[SEQUENCE_DATE["year"]])
+                month = int(date_parts[SEQUENCE_DATE["month"]])
+                day = int(date_parts[SEQUENCE_DATE["day"]])
+                print(year, month, day)
+        else:
+            pass
+        if invalid_date:
+            sg.ChangeLookAndFeel("TealMono")
+            layout = [
+                [sg.Text(f"Invalid date found: \'{self.date_in}'", font=("Arial", 10))],
+                [sg.CalendarButton("correct date")],
+                [sg.Submit("Submit"), sg.Cancel("Cancel")]
+            ]
+            window = sg.Window("Calendar").Layout(layout)
+            (button_source_file, (source_file,)) = window.Read()
 
         timestamp_date = datetime.date(year, month, day)
 
@@ -462,6 +488,8 @@ def show_error_message(error_message: str):
     """
     ## 23.04.2019 # 6:28 # B # function show_error_message
     ## 23.04.2019 # 6:41 # E
+    ## Hier steht Quatsch
+    ## 212 Und hier steht ein bewusster Fehler
     sg.ChangeLookAndFeel("Reds")
     layout = [
         [sg.Text(error_message, font=("Arial", 10))],
@@ -568,3 +596,4 @@ Hauptprogrammfehlt noch:
  #       return new_date
     pass
 """
+## End of code
