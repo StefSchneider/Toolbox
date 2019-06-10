@@ -96,7 +96,8 @@ Github: StefSchneider
 ## 10.6.2019 # 12:11 # E
 ## 10.6.2019 # 14:18 # A
 ## 10.6.2019 # 15:02 # E
-
+## 10.6.2019 # 15:35 # A
+## 10.6.2019 # 17:32 # E
 
 
 """
@@ -146,13 +147,13 @@ Exceptions:
 """
 
 
-from datetime import datetime
+import datetime
 import typing
 import PySimpleGUI as sg
 import re
 import pathlib
 
-# use constants to configurate
+# use constants to configure
 EXTENSION_FILENAME_TIMESTAMP: str = "_timestamp" # extension for new filename with timestamp data
 EXTENSION_FILENAME_CODE: str = "_code" # extension for new filename without timestamp data
 FILESUFFIXES: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
@@ -160,7 +161,9 @@ FILESUFFIXES: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
                         } # allowed suffixes for timestamp file an code file
 NEW_DIRECTORY_PATH = "timestamp" # name of new directory
 MARKS_TIMESTAMP: tuple = ("##", "#@", "#T") # add more if needed
-DIVIDE_SIGNS = re.compile("[/|\^|#|\*]") # group for regular expressions, add more if needed
+DIVIDE_SIGNS_LINES = re.compile("[\^|#|\*|\-]") # group for regular expressions, add more if needed
+DIVIDE_SIGNS_DATE = re.compile("[:|.|/]")
+DATE_SIGNS = re.compile("[\d|DIVIDE_SIGNS_DATE]")
 DATE_SPLIT_SIGNS: tuple = (":", ".", ("/")) # add more if needed
 SYNONYM_START: set = {"s", "S", "start", "Start", "START", "b", "B", "begin", "Beginn", "beginn", "BEGIN", "BEGINN",
                       "Anfang", "anfang", "ANFANG", "a", "A", "open", "OPEN", "Open", "o", "O"}
@@ -185,8 +188,6 @@ raw_timestamps: list = []
 button_source_file: bool = False
 source_file: str = ""
 timestamp_items: list = [] # fixed order of items: date, time, blocksignal, description
-for i in range(0, len(SEQUENCE_TIMESTAMP)):
-    timestamp_items.append("")
 code_lines: str = "" # collects all lines of code for writing into fobj_out_code
 timestamp_line: str = "" # # collects all lines of code for writing into fobj_out_timestamps
 last_timestamp: bool = False
@@ -337,6 +338,8 @@ class Timestamp_Item:
         timestamp_items[2] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_blocksignal"]] # 3rd: blocksignal
         timestamp_items[3] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_description"]] # 4th: description
 
+        self.check_entry_date(timestamp_items[0])
+
 
     def parse_timestamp_data(self) -> list:
         """
@@ -346,11 +349,12 @@ class Timestamp_Item:
         for marker in MARKS_TIMESTAMP:
             self.line_in = self.line_in.lstrip(marker)
         self.line_in = self.line_in.rstrip("\n")
-        parts = re.split(DIVIDE_SIGNS, self.line_in)
+        parts = re.split(DIVIDE_SIGNS_LINES, self.line_in)
         for i in range(0, len(SEQUENCE_TIMESTAMP)-len(parts)):
             parts.append("") # add empty strings to fill up parts
         for i, part in enumerate(parts):
             parts[i] = parts[i].strip(" ")
+            print(parts[i])
 
         return parts
 
@@ -362,32 +366,30 @@ class Timestamp_Item:
         :param line_in: current timestamp entry
         :return: projectname
         """
-        for elements in self.line_in:
-            if self.last_entry == True:
-                if len(projectnames) == 1: # to ensure that there is just a projectname given
-                    projectname = projectnames[0]
-                    projectname = re.split("PROJECT", projectname.upper())
-                    projectname = projectname[1].strip(" ")
-                    projectname = projectname.strip(":")
-                else:
-                    button = "No"
-                    while button != "Submit":
-                        sg.ChangeLookAndFeel("TealMono")
-                        layout = [
-                            [sg.Text("No valid projectname found! Please add projectname.")],
-                            [sg.InputText("")],
-                            [sg.Submit("Submit"), sg.Cancel()]
+        if self.last_entry == True:
+            if len(projectnames) == 1: # to ensure that there is just a projectname given
+                projectname = projectnames[0]
+                projectname = re.split("PROJECT", projectname.upper())
+                projectname = projectname[1].strip(" ")
+                projectname = projectname.strip(":")
+            else:
+                button = "No"
+                while button != "Submit":
+                    sg.ChangeLookAndFeel("TealMono")
+                    layout = [
+                        [sg.Text("No valid projectname found! Please add projectname.")],
+                        [sg.InputText("")],
+                        [sg.Submit("Submit"), sg.Cancel()]
                         ]
-                        (button, values) = sg.Window("Projectname").Layout(layout).Read()
-                    projectname = values[0]
+                    (button, values) = sg.Window("Projectname").Layout(layout).Read()
                 projectname = values[0]
-                return projectname
-            elif re.search(r"PROJECT", elements[0].upper()):
-                projectnames.append(elements[0])
-                return None
+            return projectname
+        elif re.search(r"PROJECT", self.line_in.upper()):
+            projectnames.append(self.line_in)
+            return None
 
 
-    def check_entry_date(self, date_in: str, predessesor_date: str = "0000-00-00") -> str:
+    def check_entry_date(self, date_in: str) -> datetime.date:
         """
         Überprüft und korrigiert den Datumseintrag
         Vorgehen:
@@ -405,23 +407,25 @@ class Timestamp_Item:
         :return: überprüftes und korrigiertes Datum im ISO-Format
         """
         self.date_in = date_in
+        timestamp_date: datetime.date(1, 1, 1)
         part1: str = ""
         part2: str = ""
         part3: str = ""
-        year: int = 0
-        month: int = 0
-        day: int = 0
-        adjust_date: str = "0000-00-00"
-        self.date_in = self.date_in.strip(" ")
-        parts = re.split(DIVIDE_SIGNS, self.line_in)
-        print(parts, len(parts))
-        for i, part in enumerate(parts):
-            print(i)
-            parts[i] = parts[i].strip(" ")
-            print(parts[i])
-        print(parts)
+        year: int = 1
+        month: int = 1
+        day: int = 1
+        print(self.date_in)
+        if re.match(DATE_SIGNS, self.date_in):
+            print("Match date")
+        # Bedingungen für richtigen Datumseintrag: besteht aus Zahlen und richtigen Dividern
 
-        return adjust_date
+        timestamp_date = datetime.date(year, month, day)
+
+        return timestamp_date
+
+
+
+#    def check_entry_date(self, date_in: str, predessesor_date: str = "0000-00-00") -> str:
 
 
     def add_entry(self):
@@ -465,6 +469,12 @@ def show_error_message(error_message: str):
     ]
     window = sg.Window("ERROR").Layout(layout)
     error_button, values = window.Read()
+
+
+# PREPERATION
+
+for i in range(0, len(SEQUENCE_TIMESTAMP)):
+    timestamp_items.append("") # fill list of timestamp items with empty strings
 
 
 # MAIN PROGRAM
@@ -522,9 +532,9 @@ while not button_source_file:
 
 print(raw_timestamps)
 
-
-current_timestamp = Timestamp_Item(raw_timestamps[9][0])
-current_timestamp.check_entries()
+# example to test
+# current_timestamp = Timestamp_Item(raw_timestamps[9][0])
+# current_timestamp.check_entries()
 
 
 for i, timestamp_entries in enumerate(raw_timestamps): # checks whether current timestamp is last timestamp in list
@@ -558,4 +568,3 @@ Hauptprogrammfehlt noch:
  #       return new_date
     pass
 """
-## End of Code
