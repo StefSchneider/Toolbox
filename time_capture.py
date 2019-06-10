@@ -93,7 +93,9 @@ Github: StefSchneider
 ## 10.06.2019 # 10:10 # A
 ## 10.06.2019 # 10:57 # E
 ## 10.6.2019 # 11:40 # a
-
+## 10.6.2019 # 12:11 # E
+## 10.6.2019 # 14:18 # A
+## 10.6.2019 # 15:02 # E
 
 
 
@@ -150,11 +152,12 @@ import PySimpleGUI as sg
 import re
 import pathlib
 
+# use constants to configurate
 EXTENSION_FILENAME_TIMESTAMP: str = "_timestamp" # extension for new filename with timestamp data
 EXTENSION_FILENAME_CODE: str = "_code" # extension for new filename without timestamp data
 FILESUFFIXES: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
                       EXTENSION_FILENAME_CODE: ("py",)
-                        }
+                        } # allowed suffixes for timestamp file an code file
 NEW_DIRECTORY_PATH = "timestamp" # name of new directory
 MARKS_TIMESTAMP: tuple = ("##", "#@", "#T") # add more if needed
 DIVIDE_SIGNS = re.compile("[/|\^|#|\*]") # group for regular expressions, add more if needed
@@ -181,15 +184,13 @@ filename_out_code: str = ""
 raw_timestamps: list = []
 button_source_file: bool = False
 source_file: str = ""
-timestamp_item: list = ["", "", "", ""]
-pos_date: int = 0
-pos_time: int = 0
-pos_blocksignal: int = 0
-pos_part_description: int = 0
+timestamp_items: list = [] # fixed order of items: date, time, blocksignal, description
+for i in range(0, len(SEQUENCE_TIMESTAMP)):
+    timestamp_items.append("")
 code_lines: str = "" # collects all lines of code for writing into fobj_out_code
 timestamp_line: str = "" # # collects all lines of code for writing into fobj_out_timestamps
 last_timestamp: bool = False
-list_parts: list = ["","","",""]
+projectnames: list = [] # collect all given project names in comment lines
 
 
 class File(object):
@@ -331,12 +332,10 @@ class Timestamp_Item:
         if self.check_projectname(self.line_in) != None:
             print("Check projectname successful")
 
-        list_parts[0] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_date"]]
-        list_parts[1] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_time"]]
-        list_parts[2] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_blocksignal"]]
-        list_parts[3] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_description"]]
-
-        # BEI DER REIHENFOLGE DER DATEN ÜBER DICTIONARY SEQUENCE_ZIMESTAMP GEHEN!!!!!
+        timestamp_items[0] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_date"]] # 1st: date
+        timestamp_items[1] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_time"]] # 2nd: time
+        timestamp_items[2] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_blocksignal"]] # 3rd: blocksignal
+        timestamp_items[3] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_description"]] # 4th: description
 
 
     def parse_timestamp_data(self) -> list:
@@ -348,26 +347,24 @@ class Timestamp_Item:
             self.line_in = self.line_in.lstrip(marker)
         self.line_in = self.line_in.rstrip("\n")
         parts = re.split(DIVIDE_SIGNS, self.line_in)
-        for i in range(0, 4-len(parts)):
-            parts.append("")
+        for i in range(0, len(SEQUENCE_TIMESTAMP)-len(parts)):
+            parts.append("") # add empty strings to fill up parts
         for i, part in enumerate(parts):
             parts[i] = parts[i].strip(" ")
 
         return parts
 
 
-
-    def check_projectname(self, line_in) -> str:
+    def check_projectname(self, line_in:str) -> str:
         """
-        Überprüft, ob ein Projektname eingetragen ist,
-        falls nein, wird er abgefragt
-        :param timestamps: complete list of all timestamp comment lines
+        checks whether projectname is give in complete stampstamp list
+        if not: ask for projectname via GUI
+        :param line_in: current timestamp entry
         :return: projectname
         """
-        projectnames: list = []
         for elements in self.line_in:
             if self.last_entry == True:
-                if len(projectnames) == 1:
+                if len(projectnames) == 1: # to ensure that there is just a projectname given
                     projectname = projectnames[0]
                     projectname = re.split("PROJECT", projectname.upper())
                     projectname = projectname[1].strip(" ")
@@ -388,8 +385,6 @@ class Timestamp_Item:
             elif re.search(r"PROJECT", elements[0].upper()):
                 projectnames.append(elements[0])
                 return None
-
-
 
 
     def check_entry_date(self, date_in: str, predessesor_date: str = "0000-00-00") -> str:
@@ -471,42 +466,8 @@ def show_error_message(error_message: str):
     window = sg.Window("ERROR").Layout(layout)
     error_button, values = window.Read()
 
-"""
-def check_projectname(timestamps: list) -> str:
 
-    Überrpüft, ob ein Projektname eingetragen ist,
-    falls nein, wird er abgefragt
-    :param timestamps: complete list of all timestamp comment lines
-    :return: projectname
-
-    projectnames:list = []
-    for elements in timestamps:
-        if re.search(r"PROJECT", elements[0].upper()):
-            projectnames.append(elements[0])
-    if len(projectnames) == 1:
-        projectname = projectnames[0]
-        projectname = re.split("project",  projectname)
-        projectname = projectname[1].strip(" ")
-        projectname = projectname.strip(":")
-    else:
-        button = "No"
-        while button != "Submit":
-            sg.ChangeLookAndFeel("TealMono")
-            layout = [
-                [sg.Text("No valid projectname found! Please add projectname.")],
-                [sg.InputText("")],
-                [sg.Submit("Submit"), sg.Cancel()]
-                ]
-            (button, values) = sg.Window("Projectname").Layout(layout).Read()
-        projectname =  values[0]
-
-    print("Projektname:", projectname)
-    return projectname
-"""
-
-# main program
-
-
+# MAIN PROGRAM
 
 while not button_source_file:
     while source_file == "":
@@ -566,7 +527,7 @@ current_timestamp = Timestamp_Item(raw_timestamps[9][0])
 current_timestamp.check_entries()
 
 
-for i, timestamp_entries in enumerate(raw_timestamps): # checks wether current timestamp is last timestamp in list
+for i, timestamp_entries in enumerate(raw_timestamps): # checks whether current timestamp is last timestamp in list
     if i == len(raw_timestamps)-1:
         last_timestamp = True
     current_timestamp = Timestamp_Item(timestamp_entries[0], last_timestamp)
