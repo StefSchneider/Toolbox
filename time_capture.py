@@ -104,6 +104,7 @@ Github: StefSchneider
 
 
 
+
 """
 Anforderungen an das Programm:
 
@@ -184,6 +185,9 @@ SEQUENCE_DATE: dict = {"year": 2,
                        "month": 1,
                        "day": 0
                        }
+DATE_FORMAT: dict = {"German": True,
+                     "American": False
+                     }
 
 projectname: str = ""
 found_projectname: bool = False # set on True if projectname is extracted from comment lines, else raise exception
@@ -480,6 +484,8 @@ class Timestamp_Item:
         pass
 
 
+
+
 def show_error_message(error_message: str):
     """
     Opens a window and shows an error message
@@ -499,8 +505,39 @@ def show_error_message(error_message: str):
     error_button, values = window.Read()
 
 
+def check_date_format(DATE_FORMAT: dict):
+    """
+    checks whether config date format is different by value True/False
+    :return: None
+    """
+    ## 11.6.2019 # 19:22 # a # Divider date format German / American
+    ## 11.6.2019 # 20:06 # E
+    button_date_format: str = ""
+    if DATE_FORMAT["German"] != DATE_FORMAT["American"]:
+        pass
+    else:
+        while button_date_format != "Submit":
+            sg.ChangeLookAndFeel("TealMono")
+            layout = [
+                [sg.Text("Timestamp date format:", font=("Arial", 10))],
+                [sg.Radio("German", "dateformat", default = True), sg.Radio("American", "dateformat")],
+                [sg.Submit(), sg.Cancel()]
+            ]
+            window = sg.Window("Check date format").Layout(layout)
+            button_date_format, values = window.Read()
+        if values[0] == True:
+            DATE_FORMAT["German"] = True
+            DATE_FORMAT["American"] = False
+        else:
+            DATE_FORMAT["German"] = False
+            DATE_FORMAT["American"] = True
+        print(DATE_FORMAT["German"], DATE_FORMAT["American"])
+
+
+
 # PREPERATION
 
+check_date_format(DATE_FORMAT)
 for i in range(0, len(SEQUENCE_TIMESTAMP)):
     timestamp_items.append("") # fill list of timestamp items with empty strings
 
