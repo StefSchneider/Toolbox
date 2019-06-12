@@ -4,15 +4,15 @@ autor: Stefan Schneider
 Github: StefSchneider
 """
 #@ project: TIME CAPTURE
-## 14.04.2019 - 12:00 # B
-## 14.04.2019 - 12:15 # Ende
-## 14.2019 - Kalendertest
-## 14.04.2019 - 12:15 # B
-## 14.04.2019 - 12:30 # E
-## 14.04.2019 - 13:30 # Begin
-## 14.04.2019 - 14:30 # E
-## 17.04.2019 - 8:15 # B
-## 17.04.2019 - 8:45 # ende
+## 14.04.2019 # 12:00 # B
+## 14.04.2019 # 12:15 # Ende
+## 14.2019 # Kalendertest
+## 14.04.2019 # 12:15 # B
+## 14.04.2019 # 12:30 # E
+## 14.04.2019 # 13:30 # Begin
+## 14.04.2019 # 14:30 # E
+## 17.04.2019 # 8:15 # B
+## 17.04.2019 # 8:45 # ende
 ## 17.04.2019 # 9.15 # B # Entwicklung Klasse Timestamp_Item
 ## 17.04.2019 # 9:30 # e
 ## 17.04.2019 # 19:45 # B
@@ -101,6 +101,11 @@ Github: StefSchneider
 ## 10.6.2019 # 17:32 # E
 ## 10.6.2019 # 20:32 # A
 ## 10.6.2019 # 22.20 # E
+##12.6.2019 # 17:10 # A
+## 12.6.2019 # 17:55 # E
+## 12.6.2019 #  18:32 # A
+## 12.6.2019 # 18:52 # E
+
 
 
 
@@ -166,8 +171,8 @@ FILESUFFIXES: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
                         } # allowed suffixes for timestamp file an code file
 NEW_DIRECTORY_PATH = "timestamp" # name of new directory
 MARKS_TIMESTAMP: tuple = ("##", "#@", "#T") # add more if needed
-DIVIDE_SIGNS_LINES = re.compile("[\^|#|\*|\-]") # group for regular expressions, add more if needed
-DIVIDE_SIGNS_DATE = re.compile("[:|\.|/]")
+DIVIDE_SIGNS_LINES = re.compile("[\^|#|\*]") # group for regular expressions, add more if needed
+DIVIDE_SIGNS_DATE = re.compile("[:|\.|/|\-]")
 DATE_SIGNS = re.compile("([0-9]|:|\.|/)*")
 DATE_SPLIT_SIGNS: tuple = (":", ".", ("/")) # add more if needed
 SYNONYM_START: set = {"s", "S", "start", "Start", "START", "b", "B", "begin", "Beginn", "beginn", "BEGIN", "BEGINN",
@@ -181,9 +186,9 @@ SEQUENCE_TIMESTAMP: dict = {"part_date": 0,  # key: content; value: position in 
                             "part_blocksignal": 2,
                             "part_description": 3
                             } # orders sequence of timestamp input
-SEQUENCE_DATE: dict = {"year": 2,
-                       "month": 1,
-                       "day": 0
+SEQUENCE_DATE: dict = {"year": (2, 0),
+                       "month": (1, 1),
+                       "day": (0, 2)
                        }
 DATE_FORMAT: dict = {"German": True,
                      "American": False
@@ -197,6 +202,7 @@ filename_in: str = ""
 filename_out_timestamp: str = ""
 filename_out_code: str = ""
 raw_timestamps: list = []
+final_timestamps: list = []
 button_source_file: bool = False
 source_file: str = ""
 timestamp_items: list = [] # fixed order of items: date, time, blocksignal, description
@@ -347,10 +353,12 @@ class Timestamp_Item:
         timestamp_items[1] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_time"]] # 2nd: time
         timestamp_items[2] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_blocksignal"]] # 3rd: blocksignal
         timestamp_items[3] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_description"]] # 4th: description
-        self.check_entry_date(timestamp_items[0])
+        print("Timestamp items",timestamp_items[0])
+        final_timestamps.append([self.check_entry_date(timestamp_items[0])])
 
         if self.check_projectname(self.line_in) != None:
             print("Check projectname successful")
+
 
 
 
@@ -374,7 +382,7 @@ class Timestamp_Item:
 
     def check_projectname(self, line_in:str) -> str:
         """
-        checks whether projectname is give in complete stampstamp list
+        checks whether projectname is given in complete timestamp list
         if not: ask for projectname via GUI
         :param line_in: current timestamp entry
         :return: projectname
@@ -433,25 +441,33 @@ class Timestamp_Item:
                     or (int(date_parts[0]) > 12 and int(date_parts[1]) > 12 and int(date_parts[2] > 12)):
                 invalid_date = True
             else:
-                year = int(date_parts[SEQUENCE_DATE["year"]])
-                month = int(date_parts[SEQUENCE_DATE["month"]])
-                day = int(date_parts[SEQUENCE_DATE["day"]])
-                print(year, month, day)
+                if DATE_FORMAT["German"] == True:
+                    year = int(date_parts[SEQUENCE_DATE["year"][0]])
+                    month = int(date_parts[SEQUENCE_DATE["month"][0]])
+                    day = int(date_parts[SEQUENCE_DATE["day"][0]])
+                else:
+                    year = int(date_parts[SEQUENCE_DATE["year"][1]])
+                    month = int(date_parts[SEQUENCE_DATE["month"][1]])
+                    day = int(date_parts[SEQUENCE_DATE["day"][1]])
+            if invalid_date:
+                sg.ChangeLookAndFeel("TealMono")
+                layout = [
+                    [sg.Text(f"Invalid date found: \'{self.date_in}'", font=("Arial", 10))],
+                    [sg.CalendarButton("correct date")],
+                    [sg.Submit("Submit"), sg.Cancel("Cancel")]
+                ]
+                window = sg.Window("Calendar").Layout(layout)
+                (button_source_file, values) = window.Read()
+                year = values[0].year
+                month = values[0].month
+                day = values[0].day
+            print(year, month, day)
+            timestamp_date = datetime.date(year, month, day)
+
+            return timestamp_date
         else:
-            pass
-        if invalid_date:
-            sg.ChangeLookAndFeel("TealMono")
-            layout = [
-                [sg.Text(f"Invalid date found: \'{self.date_in}'", font=("Arial", 10))],
-                [sg.CalendarButton("correct date")],
-                [sg.Submit("Submit"), sg.Cancel("Cancel")]
-            ]
-            window = sg.Window("Calendar").Layout(layout)
-            (button_source_file, (source_file,)) = window.Read()
 
-        timestamp_date = datetime.date(year, month, day)
-
-        return timestamp_date
+            return None
 
 
 
@@ -608,7 +624,9 @@ for i, timestamp_entries in enumerate(raw_timestamps): # checks whether current 
     current_timestamp = Timestamp_Item(timestamp_entries[0], last_timestamp)
     current_timestamp.check_entries()
 
-
+while None in final_timestamps:
+    final_timestamps.remove(None)
+print(final_timestamps)
 
 """
 example: str = raw_timestamps[9][0]
