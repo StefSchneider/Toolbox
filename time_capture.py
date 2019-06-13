@@ -107,7 +107,7 @@ Github: StefSchneider
 ## 12.6.2019 # 18:52 # E
 
 
-
+# from dateutil.parser import parse
 
 
 """
@@ -353,8 +353,14 @@ class Timestamp_Item:
         timestamp_items[1] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_time"]] # 2nd: time
         timestamp_items[2] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_blocksignal"]] # 3rd: blocksignal
         timestamp_items[3] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_description"]] # 4th: description
-        print("Timestamp items",timestamp_items[0])
-        final_timestamps.append([self.check_entry_date(timestamp_items[0])])
+        print("Timestamp items",timestamp_items[1])
+        correct_date = self.check_entry_date((timestamp_items[0]))
+        if correct_date!= None:
+            final_timestamp_item = [correct_date]
+            final_timestamp_item.append(timestamp_items[1])
+            final_timestamp_item.append(timestamp_items[2])
+            final_timestamp_item.append(timestamp_items[3])
+            final_timestamps.extend([final_timestamp_item])
 
         if self.check_projectname(self.line_in) != None:
             print("Check projectname successful")
@@ -412,12 +418,8 @@ class Timestamp_Item:
 
     def check_entry_date(self, date_in: str) -> datetime.date:
         """
-        Überprüft und korrigiert den Datumseintrag
-        Vorgehen:
-        1. zerlegen des mitgelieferten Datumsstrings
-        2. überprüfen, welcher Teil zum Jahr, Monat und Tag des Datumseintrags gehört anhand von Logiken (Monat > 12 etc.)
-        -> bei Unklarheiten Aufruf von Methode revise_date
-        3. zuordnen, welcher Teil zum Jahr, Monat und Tag des Datumseintrags gehört
+        checks and corrects timestamp date
+
         Überprüfungen:
         - ist der ausgelesene Datumseintrag größer als das aktuelle Datum: Fehlermeldung und Korrrekturmöglichkeit
         - ist der ausgelesene Datumseintrag kleiner als der letzte vorhandene Datumseintrag: Fehlermeldung und Korrrekturmöglichkeit
@@ -436,7 +438,6 @@ class Timestamp_Item:
         day: int = 1
         if re.fullmatch(DATE_SIGNS, self.date_in):
             date_parts = re.split(DIVIDE_SIGNS_DATE, self.date_in)
-            print(self.date_in, date_parts)
             if len(date_parts) != 3 \
                     or (int(date_parts[0]) > 12 and int(date_parts[1]) > 12 and int(date_parts[2] > 12)):
                 invalid_date = True
@@ -461,7 +462,6 @@ class Timestamp_Item:
                 year = values[0].year
                 month = values[0].month
                 day = values[0].day
-            print(year, month, day)
             timestamp_date = datetime.date(year, month, day)
 
             return timestamp_date
@@ -624,8 +624,7 @@ for i, timestamp_entries in enumerate(raw_timestamps): # checks whether current 
     current_timestamp = Timestamp_Item(timestamp_entries[0], last_timestamp)
     current_timestamp.check_entries()
 
-while None in final_timestamps:
-    final_timestamps.remove(None)
+
 print(final_timestamps)
 
 """
