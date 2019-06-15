@@ -172,8 +172,8 @@ FILESUFFIXES: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
 NEW_DIRECTORY_PATH = "timestamp" # name of new directory
 MARKS_TIMESTAMP: tuple = ("##", "#@", "#T") # add more if needed
 DIVIDE_SIGNS_LINES = re.compile("[\^|#|\*]") # group for regular expressions, add more if needed
-DIVIDE_SIGNS_DATE = re.compile("[:|\.|/|\-]")
-DATE_SIGNS = re.compile("([0-9]|:|\.|/)*")
+DIVIDE_SIGNS_DATE = re.compile("[:|\.|/|\-|\s]")
+DATE_SIGNS = re.compile("([0-9]|:|\.|/|\s)*")
 DATE_SPLIT_SIGNS: tuple = (":", ".", ("/")) # add more if needed
 SYNONYM_START: set = {"s", "S", "start", "Start", "START", "b", "B", "begin", "Beginn", "beginn", "BEGIN", "BEGINN",
                       "Anfang", "anfang", "ANFANG", "a", "A", "open", "OPEN", "Open", "o", "O"}
@@ -210,6 +210,7 @@ code_lines: str = "" # collects all lines of code for writing into fobj_out_code
 timestamp_line: str = "" # # collects all lines of code for writing into fobj_out_timestamps
 last_timestamp: bool = False
 projectnames: list = [] # collect all given project names in comment lines
+pos_current_timestamp_item: int = 0
 
 
 class File(object):
@@ -334,8 +335,25 @@ class Timestamp_Item:
         pass
 
 
+    def parse_timestamp_data(self) -> list:
+        """
+        divides comment lines in project name or time data
+        :return: list of timestamp date, time, start or end of timestamp and description of project part
+        """
+        self.line_in = self.line_in.lstrip(" ")
+        for marker in MARKS_TIMESTAMP:
+            self.line_in = self.line_in.lstrip(marker)
+        self.line_in = self.line_in.rstrip("\n")
+        parts = re.split(DIVIDE_SIGNS_LINES, self.line_in)
+        for i in range(0, len(SEQUENCE_TIMESTAMP)-len(parts)):
+            parts.append("") # add empty strings to fill up parts
+        for i, part in enumerate(parts):
+            parts[i] = parts[i].strip(" ")
 
-    def check_entries(self):
+        return parts
+
+
+    def check_entries(self, pos_current_timestamp_item):
         """
         überprüft die Einträge auf richtige Schreibweise
         data.isoformat zur Umwandlung nutzen
@@ -354,36 +372,19 @@ class Timestamp_Item:
         timestamp_items[2] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_blocksignal"]] # 3rd: blocksignal
         timestamp_items[3] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_description"]] # 4th: description
         print("Timestamp items",timestamp_items[1])
-        correct_date = self.check_entry_date((timestamp_items[0]))
-        if correct_date!= None:
-            final_timestamp_item = [correct_date]
+        correct_date_entry = self.check_entry_date((timestamp_items[0]))
+        if correct_date_entry != None:
+            final_timestamp_item = [correct_date_entry]
             final_timestamp_item.append(timestamp_items[1])
             final_timestamp_item.append(timestamp_items[2])
             final_timestamp_item.append(timestamp_items[3])
             final_timestamps.extend([final_timestamp_item])
+            pos_current_timestamp_item += 1
 
         if self.check_projectname(self.line_in) != None:
             print("Check projectname successful")
 
 
-
-
-    def parse_timestamp_data(self) -> list:
-        """
-        divides comment lines in project name or time data
-        :return: list of timestamp date, time, start or end of timestamp and description of project part
-        """
-        self.line_in = self.line_in.lstrip(" ")
-        for marker in MARKS_TIMESTAMP:
-            self.line_in = self.line_in.lstrip(marker)
-        self.line_in = self.line_in.rstrip("\n")
-        parts = re.split(DIVIDE_SIGNS_LINES, self.line_in)
-        for i in range(0, len(SEQUENCE_TIMESTAMP)-len(parts)):
-            parts.append("") # add empty strings to fill up parts
-        for i, part in enumerate(parts):
-            parts[i] = parts[i].strip(" ")
-
-        return parts
 
 
     def check_projectname(self, line_in:str) -> str:
@@ -410,9 +411,11 @@ class Timestamp_Item:
                         ]
                     (button, values) = sg.Window("Projectname").Layout(layout).Read()
                 projectname = values[0]
+
             return projectname
         elif re.search(r"PROJECT", self.line_in.upper()):
             projectnames.append(self.line_in)
+
             return None
 
 
@@ -451,23 +454,45 @@ class Timestamp_Item:
                     month = int(date_parts[SEQUENCE_DATE["month"][1]])
                     day = int(date_parts[SEQUENCE_DATE["day"][1]])
             if invalid_date:
-                sg.ChangeLookAndFeel("TealMono")
-                layout = [
-                    [sg.Text(f"Invalid date found: \'{self.date_in}'", font=("Arial", 10))],
-                    [sg.CalendarButton("correct date")],
-                    [sg.Submit("Submit"), sg.Cancel("Cancel")]
-                ]
-                window = sg.Window("Calendar").Layout(layout)
-                (button_source_file, values) = window.Read()
-                year = values[0].year
-                month = values[0].month
-                day = values[0].day
-            timestamp_date = datetime.date(year, month, day)
+                timestamp_date = self.correct_date(self.date_in, pos_current_timestamp_item)
+            else:
+                timestamp_date = datetime.date(year, month, day)
 
             return timestamp_date
         else:
 
             return None
+
+
+    def correct_date(self, wrong_date: str, pos_timestamp: int) -> datetime.date:
+        """
+
+        :return:
+        """
+        ## 14.6.2019 # 20:38 # A # Methode correct_date ausgliedern
+        ## 14.6.2019 # 21:50 # E
+        ## 15.6.2018 # 11:53 # A
+        ## 15.6.2019 # 11:59 # E
+
+        self.wrong_date = wrong_date
+        self.pos_timestamp_list = pos_timestamp
+        sg.ChangeLookAndFeel("TealMono")
+        layout = [
+            [sg.Text(section_items) for section_items in exclude_section(final_timestamps)],
+            [sg.Text(f"Invalid date found: \'{self.wrong_date}'", font=("Arial", 10))],
+            [sg.CalendarButton("correct date")],
+            [sg.Submit("Submit"), sg.Cancel("Cancel")]
+        ]
+        window = sg.Window("Calendar").Layout(layout)
+        (button_source_file, values) = window.Read()
+        year = values[0].year
+        month = values[0].month
+        day = values[0].day
+
+        return datetime.date(year, month, day)
+
+
+
 
 
 
@@ -547,8 +572,22 @@ def check_date_format(DATE_FORMAT: dict):
         else:
             DATE_FORMAT["German"] = False
             DATE_FORMAT["American"] = True
-        print(DATE_FORMAT["German"], DATE_FORMAT["American"])
 
+
+def exclude_section(list_in: list) -> list:
+    """
+
+    :param list_in:
+    :return: list with part of list_in
+    """
+    ## 15.6.2019 # 11:20 # A # Aufbau Funktion exclude_section
+    ## 15.6.2019 # 11:51 # E
+    length_list: int = 0
+    length_list = len(list_in)
+    if length_list > SECTION_TO_SHOW:
+        length_list = SECTION_TO_SHOW
+
+    return list_in[len(list_in)-length_list:]
 
 
 # PREPERATION
@@ -622,7 +661,7 @@ for i, timestamp_entries in enumerate(raw_timestamps): # checks whether current 
     if i == len(raw_timestamps)-1:
         last_timestamp = True
     current_timestamp = Timestamp_Item(timestamp_entries[0], last_timestamp)
-    current_timestamp.check_entries()
+    current_timestamp.check_entries(pos_current_timestamp_item)
 
 
 print(final_timestamps)
