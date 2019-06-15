@@ -105,7 +105,8 @@ Github: StefSchneider
 ## 12.6.2019 # 17:55 # E
 ## 12.6.2019 #  18:32 # A
 ## 12.6.2019 # 18:52 # E
-
+## 15.6.2019 # 19:08 # A
+## 15.6.2019 # 19:53 # E
 
 # from dateutil.parser import parse
 
@@ -168,7 +169,7 @@ EXTENSION_FILENAME_TIMESTAMP: str = "_timestamp" # extension for new filename wi
 EXTENSION_FILENAME_CODE: str = "_code" # extension for new filename without timestamp data
 FILESUFFIXES: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
                       EXTENSION_FILENAME_CODE: ("py",)
-                        } # allowed suffixes for timestamp file an code file
+                    } # allowed suffixes for timestamp file an code file
 NEW_DIRECTORY_PATH = "timestamp" # name of new directory
 MARKS_TIMESTAMP: tuple = ("##", "#@", "#T") # add more if needed
 DIVIDE_SIGNS_LINES = re.compile("[\^|#|\*]") # group for regular expressions, add more if needed
@@ -289,7 +290,7 @@ class File(object):
         return (
             new_path.joinpath(self.filename + EXTENSION_FILENAME_TIMESTAMP + "." + file_suffix),
             new_path.joinpath(self.filename + EXTENSION_FILENAME_CODE + "." + FILESUFFIXES[EXTENSION_FILENAME_CODE][0])
-         )
+            )
 
 
     def overwrite_file(self, file_data: typing.Tuple[str, str], code: list = []):
@@ -371,7 +372,7 @@ class Timestamp_Item:
         timestamp_items[1] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_time"]] # 2nd: time
         timestamp_items[2] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_blocksignal"]] # 3rd: blocksignal
         timestamp_items[3] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_description"]] # 4th: description
-        print("Timestamp items",timestamp_items[1])
+        print("Timestamp items", timestamp_items[1])
         correct_date_entry = self.check_entry_date((timestamp_items[0]))
         if correct_date_entry != None:
             final_timestamp_item = [correct_date_entry]
@@ -387,7 +388,7 @@ class Timestamp_Item:
 
 
 
-    def check_projectname(self, line_in:str) -> str:
+    def check_projectname(self, line_in: str) -> str:
         """
         checks whether projectname is given in complete timestamp list
         if not: ask for projectname via GUI
@@ -476,9 +477,11 @@ class Timestamp_Item:
 
         self.wrong_date = wrong_date
         self.pos_timestamp_list = pos_timestamp
+        new_line = "\n"
         sg.ChangeLookAndFeel("TealMono")
         layout = [
-            [sg.Text(section_items) for section_items in exclude_section(final_timestamps)],
+            [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps))}")],
+#            [sg.Text(f"{section_items}") for section_items in exclude_section(final_timestamps)],
             [sg.Text(f"Invalid date found: \'{self.wrong_date}'", font=("Arial", 10))],
             [sg.CalendarButton("correct date")],
             [sg.Submit("Submit"), sg.Cancel("Cancel")]
@@ -582,12 +585,17 @@ def exclude_section(list_in: list) -> list:
     """
     ## 15.6.2019 # 11:20 # A # Aufbau Funktion exclude_section
     ## 15.6.2019 # 11:51 # E
-    length_list: int = 0
-    length_list = len(list_in)
+    section_list: list = []
+    length_list: int = len(list_in)
     if length_list > SECTION_TO_SHOW:
         length_list = SECTION_TO_SHOW
+    for items in list_in[len(list_in)-length_list:]:
+        datestring, timestring = str(items[0]), str(items[1])
+#        modified_item: tuple = (datestring, timestring)
+        section_list.append(datestring)
 
-    return list_in[len(list_in)-length_list:]
+    return section_list
+
 
 
 # PREPERATION
