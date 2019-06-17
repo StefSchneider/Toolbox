@@ -191,8 +191,8 @@ SEQUENCE_DATE: dict = {"year": (2, 0),
                        "month": (1, 1),
                        "day": (0, 2)
                        }
-DATE_FORMAT: dict = {"German": True,
-                     "American": False
+DATE_FORMAT: dict = {"German": False,
+                     "American": True
                      }
 
 projectname: str = ""
@@ -211,7 +211,6 @@ code_lines: str = "" # collects all lines of code for writing into fobj_out_code
 timestamp_line: str = "" # # collects all lines of code for writing into fobj_out_timestamps
 last_timestamp: bool = False
 projectnames: list = [] # collect all given project names in comment lines
-pos_current_timestamp_item: int = 0
 
 
 class File(object):
@@ -354,7 +353,7 @@ class Timestamp_Item:
         return parts
 
 
-    def check_entries(self, pos_current_timestamp_item):
+    def check_entries(self):
         """
         überprüft die Einträge auf richtige Schreibweise
         data.isoformat zur Umwandlung nutzen
@@ -380,7 +379,6 @@ class Timestamp_Item:
             final_timestamp_item.append(timestamp_items[2])
             final_timestamp_item.append(timestamp_items[3])
             final_timestamps.extend([final_timestamp_item])
-            pos_current_timestamp_item += 1
 
         if self.check_projectname(self.line_in) != None:
             print("Check projectname successful")
@@ -454,8 +452,9 @@ class Timestamp_Item:
                     year = int(date_parts[SEQUENCE_DATE["year"][1]])
                     month = int(date_parts[SEQUENCE_DATE["month"][1]])
                     day = int(date_parts[SEQUENCE_DATE["day"][1]])
+            print(year, month,  day)
             if invalid_date:
-                timestamp_date = self.correct_date(self.date_in, pos_current_timestamp_item)
+                timestamp_date = self.correct_date(self.date_in)
             else:
                 timestamp_date = datetime.date(year, month, day)
 
@@ -474,6 +473,8 @@ class Timestamp_Item:
         ## 14.6.2019 # 21:50 # E
         ## 15.6.2018 # 11:53 # A
         ## 15.6.2019 # 11:59 # E
+        ## 17.6.2019 # 08:00 # A
+        ## 17.6.2019 # 8:23 # E
 
         self.wrong_date = wrong_date
         self.pos_timestamp_list = pos_timestamp
@@ -482,7 +483,7 @@ class Timestamp_Item:
         layout = [
             [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps))}")],
 #            [sg.Text(f"{section_items}") for section_items in exclude_section(final_timestamps)],
-            [sg.Text(f"Invalid date found: \'{self.wrong_date}'", font=("Arial", 10))],
+            [sg.Text(f"\'{self.wrong_date}' Invalid date found", font=("Arial", 10), text_color = "red")],
             [sg.CalendarButton("correct date")],
             [sg.Submit("Submit"), sg.Cancel("Cancel")]
         ]
@@ -590,9 +591,12 @@ def exclude_section(list_in: list) -> list:
     if length_list > SECTION_TO_SHOW:
         length_list = SECTION_TO_SHOW
     for items in list_in[len(list_in)-length_list:]:
-        datestring, timestring = str(items[0]), str(items[1])
-#        modified_item: tuple = (datestring, timestring)
+        if DATE_FORMAT["German"]:
+            datestring = str(items[0].day) + "." + str(items[0].month) + "." + str(items[0].year)
+        elif DATE_FORMAT["American"]:
+            datestring = str(items[0])
         section_list.append(datestring)
+    print(section_list)
 
     return section_list
 
@@ -669,7 +673,7 @@ for i, timestamp_entries in enumerate(raw_timestamps): # checks whether current 
     if i == len(raw_timestamps)-1:
         last_timestamp = True
     current_timestamp = Timestamp_Item(timestamp_entries[0], last_timestamp)
-    current_timestamp.check_entries(pos_current_timestamp_item)
+    current_timestamp.check_entries()
 
 
 print(final_timestamps)
