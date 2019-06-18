@@ -191,8 +191,8 @@ SEQUENCE_DATE: dict = {"year": (2, 0),
                        "month": (1, 1),
                        "day": (0, 2)
                        }
-DATE_FORMAT: dict = {"German": False,
-                     "American": True
+DATE_FORMAT: dict = {"German": True,
+                     "American": False
                      }
 
 projectname: str = ""
@@ -463,8 +463,27 @@ class Timestamp_Item:
 
             return None
 
+        """
+        ungültige Datumsanzeigen:
+        Tag > 31
+        Monat > 12
+        def monthcheck(month):
+            return 0 < month <= 12
+        Jahr > aktuelles Jahr
+        gibt es das Datum überhaupt
+        try:
+            datetime.date(year, month, day)
+        execpt ValueError
+        liegt das Datum hinter dem aktuelles Datum (today)
+        try:
+            datetime.strptime(user_input, '%m/%d/%Y')
+            print('The date {} is valid.'.format(user_input))
+        except ValueError:
+            print('The date {} is invalid'.format(user_input))
+        """
 
-    def correct_date(self, wrong_date: str, pos_timestamp: int) -> datetime.date:
+
+    def correct_date(self, wrong_date: str) -> datetime.date:
         """
 
         :return:
@@ -475,9 +494,10 @@ class Timestamp_Item:
         ## 15.6.2019 # 11:59 # E
         ## 17.6.2019 # 08:00 # A
         ## 17.6.2019 # 8:23 # E
+        ## 18.6.2019 # 9.09 # A
+        ## 18.6.2019 # 9:26 # E
 
         self.wrong_date = wrong_date
-        self.pos_timestamp_list = pos_timestamp
         new_line = "\n"
         sg.ChangeLookAndFeel("TealMono")
         layout = [
