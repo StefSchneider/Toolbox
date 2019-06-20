@@ -6,9 +6,9 @@ Github: StefSchneider
 #@ project: TIME CAPTURE
 ## 14.04.2019 # 12:00 # B
 ## 14.04.2019 # 12:15 # Ende
-## 14.2019 # Kalendertest
 ## 14.04.2019 # 12:15 # B
 ## 14.04.2019 # 12:30 # E
+## 38.4.2019 # 12:30 # A # Kalendertest
 ## 14.04.2019 # 13:30 # Begin
 ## 14.04.2019 # 14:30 # E
 ## 17.04.2019 # 8:15 # B
@@ -16,6 +16,8 @@ Github: StefSchneider
 ## 17.04.2019 # 9.15 # B # Entwicklung Klasse Timestamp_Item
 ## 17.04.2019 # 9:30 # e
 ## 17.04.2019 # 19:45 # B
+## 14.2019 # Kalendertest
+
 ## 17.4.2019 # 20:00 # E
 ## 18.4.2019 # 10:15 # B
 ## 18.4.2019 # 10:45 # E
@@ -438,13 +440,14 @@ class Timestamp_Item:
         year: int = 1
         month: int = 1
         day: int = 1
+        date_error_message: str = ""
         if re.fullmatch(DATE_SIGNS, self.date_in):
             date_parts = re.split(DIVIDE_SIGNS_DATE, self.date_in)
-            if len(date_parts) != 3 \
-                    or (int(date_parts[0]) > 12 and int(date_parts[1]) > 12 and int(date_parts[2] > 12)):
+            if len(date_parts) != 3:
                 invalid_date = True
+                date_error_message = "wrong date format"
             else:
-                if DATE_FORMAT["German"] == True:
+                if DATE_FORMAT["German"]:
                     year = int(date_parts[SEQUENCE_DATE["year"][0]])
                     month = int(date_parts[SEQUENCE_DATE["month"][0]])
                     day = int(date_parts[SEQUENCE_DATE["day"][0]])
@@ -452,9 +455,20 @@ class Timestamp_Item:
                     year = int(date_parts[SEQUENCE_DATE["year"][1]])
                     month = int(date_parts[SEQUENCE_DATE["month"][1]])
                     day = int(date_parts[SEQUENCE_DATE["day"][1]])
-            print(year, month,  day)
+                try:
+                    datetime.date(year, month, day)
+                except ValueError:
+                    invalid_date = True
+                    date_error_message = "invalid date entry found"
+                    if day < 1 or day > 31:
+                        date_error_message = "wrong entry day"
+                    elif month < 1 or month > 12:
+                        date_error_message = "wrong entry month"
+                    elif datetime.date(year, month, day) > datetime.date.today():
+                        date_error_message = "date in future"
+
             if invalid_date:
-                timestamp_date = self.correct_date(self.date_in)
+                timestamp_date = self.correct_date(self.date_in, date_error_message)
             else:
                 timestamp_date = datetime.date(year, month, day)
 
@@ -463,27 +477,8 @@ class Timestamp_Item:
 
             return None
 
-        """
-        ungültige Datumsanzeigen:
-        Tag > 31
-        Monat > 12
-        def monthcheck(month):
-            return 0 < month <= 12
-        Jahr > aktuelles Jahr
-        gibt es das Datum überhaupt
-        try:
-            datetime.date(year, month, day)
-        execpt ValueError
-        liegt das Datum hinter dem aktuelles Datum (today)
-        try:
-            datetime.strptime(user_input, '%m/%d/%Y')
-            print('The date {} is valid.'.format(user_input))
-        except ValueError:
-            print('The date {} is invalid'.format(user_input))
-        """
 
-
-    def correct_date(self, wrong_date: str) -> datetime.date:
+    def correct_date(self, wrong_date: str, date_error_message) -> datetime.date:
         """
 
         :return:
@@ -496,14 +491,17 @@ class Timestamp_Item:
         ## 17.6.2019 # 8:23 # E
         ## 18.6.2019 # 9.09 # A
         ## 18.6.2019 # 9:26 # E
+        ## 20.6.2019 # 11:24 # A
+        ## 20.6.2019 # 12.12 # E
 
         self.wrong_date = wrong_date
+        self.date_error_message = date_error_message
         new_line = "\n"
         sg.ChangeLookAndFeel("TealMono")
         layout = [
             [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps))}")],
 #            [sg.Text(f"{section_items}") for section_items in exclude_section(final_timestamps)],
-            [sg.Text(f"\'{self.wrong_date}' Invalid date found", font=("Arial", 10), text_color = "red")],
+            [sg.Text(f"\'{self.wrong_date}' '{self.date_error_message}", font=("Arial", 12, "bold"), text_color = "red")],
             [sg.CalendarButton("correct date")],
             [sg.Submit("Submit"), sg.Cancel("Cancel")]
         ]
