@@ -493,23 +493,39 @@ class Timestamp_Item:
         ## 18.6.2019 # 9:26 # E
         ## 20.6.2019 # 11:24 # A
         ## 20.6.2019 # 12.12 # E
+        ## 20.6.2019 # 16:02 # A
+        ## 20.6.2019 # 17:06 # E
 
         self.wrong_date = wrong_date
         self.date_error_message = date_error_message
-        new_line = "\n"
+        new_line: str = "\n"
+        new_date_entry: bool = False
+        button_correct_date: str = ""
         sg.ChangeLookAndFeel("TealMono")
-        layout = [
-            [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps))}")],
-#            [sg.Text(f"{section_items}") for section_items in exclude_section(final_timestamps)],
-            [sg.Text(f"\'{self.wrong_date}' '{self.date_error_message}", font=("Arial", 12, "bold"), text_color = "red")],
-            [sg.CalendarButton("correct date")],
-            [sg.Submit("Submit"), sg.Cancel("Cancel")]
-        ]
-        window = sg.Window("Calendar").Layout(layout)
-        (button_source_file, values) = window.Read()
-        year = values[0].year
-        month = values[0].month
-        day = values[0].day
+        while not new_date_entry:
+            layout = [
+                [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps))}")],
+                [sg.Text(f"\{self.wrong_date} {self.date_error_message}", font=("Arial", 11, "bold"),
+                         text_color=("red" if not new_date_entry else "green"))],
+                [sg.CalendarButton("correct date", target=(True, False), key='date')],
+                [sg.Ok(key=True)],
+            ]
+            window = sg.Window("Calendar").Layout(layout)
+            date_values = window.Read()
+            year = date_values[0].year
+            month = date_values[0].month
+            day = date_values[0].day
+            while button_correct_date != "Submit":
+                layout = [
+                    [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps))}")],
+                    [sg.Text(f"\'{self.wrong_date}' new date", font=("Arial", 11, "bold"), text_color="green")],
+                    [sg.CalendarButton("correct date")],
+                    [sg.Submit("Submit"), sg.Cancel("Cancel")]
+                ]
+                window = sg.Window("Calendar").Layout(layout)
+                button_correct_date = window.Read()
+            if datetime.date:
+                new_date_entry = True
 
         return datetime.date(year, month, day)
 
