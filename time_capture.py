@@ -111,8 +111,9 @@ Github: StefSchneider
 ## 15.6.2019 # 19:53 # E
 ## 21.6.2019 # 9:08 # A
 ## 21.6.2019 # 9:17 # E
+## 21.6.2019 # 17:59 # A
+## 21.6.2019 # 18:45 # E
 
-# from dateutil.parser import parse
 
 
 """
@@ -167,6 +168,8 @@ import typing
 import PySimpleGUI as sg
 import re
 import pathlib
+# from dateutil.parser import parse
+
 
 # use constants to configure
 EXTENSION_FILENAME_TIMESTAMP: str = "_timestamp" # extension for new filename with timestamp data
@@ -405,15 +408,15 @@ class Timestamp_Item:
                 projectname = projectname[1].strip(" ")
                 projectname = projectname.strip(":")
             else:
-                button = "No"
-                while button != "Submit":
+                button_projectname = "No"
+                while button_projectname != "Submit":
                     sg.ChangeLookAndFeel("TealMono")
                     layout = [
-                        [sg.Text("No valid projectname found! Please add projectname.")],
+                        [sg.Text("No valid projectname found! Please add projectname.", font=("Arial", 11, "bold"))],
                         [sg.InputText("")],
                         [sg.Submit("Submit"), sg.Cancel()]
                         ]
-                    (button, values) = sg.Window("Projectname").Layout(layout).Read()
+                    (button_projectname, values) = sg.Window("Projectname").Layout(layout).Read()
                 projectname = values[0]
 
             return projectname
@@ -498,20 +501,32 @@ class Timestamp_Item:
         ## 20.6.2019 # 12.12 # E
         ## 20.6.2019 # 16:02 # A
         ## 20.6.2019 # 17:06 # E
-
+        """
+        Ablauf:
+        Fenster bleibt geöffnet, solange bis Datum korrigiert und Submit-Button gedrückt wurde
+        - wenn Datum falsch, zeige: 
+            - letzte 5 Einträge
+            - fehlerhaften Eintrag und Fehlermeldung in roter Schrift
+            - correct date-Button
+        - wenn richtiges Datum über Kalender ausgesucht wurde, zeige:
+            - letzte 5 Einträge
+            - neuen Datumseintrag und Meldung 'corrected date' in grüner Schrift
+            - correct date-Button
+            - Submit-Button
+        """
         self.wrong_date = wrong_date
         self.date_error_message = date_error_message
         new_line: str = "\n"
         new_date_entry: bool = False
         button_correct_date: str = ""
         sg.ChangeLookAndFeel("TealMono")
-        while not new_date_entry:
+        while button_correct_date != "Submit" and not new_date_entry:
             layout = [
                 [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps, False))}")],
                 [sg.Text(f"\{self.wrong_date} {self.date_error_message}", font=("Arial", 11, "bold"),
                          text_color=("red" if not new_date_entry else "green"))],
                 [sg.CalendarButton("correct date", target=(True, False), key='date')],
-                [sg.Ok(key=True)],
+                [sg.Submit()] if new_date_entry == True,
             ]
             window = sg.Window("Calendar").Layout(layout)
             date_values = window.Read()
@@ -681,7 +696,7 @@ while not button_source_file:
         except FileExistsError:
             sg.ChangeLookAndFeel("TealMono")
             layout = [
-                [sg.Text(f"\'{fobj_out_code}\' already exists.")],
+                [sg.Text(f"\'{fobj_out_code}\' already exists.", font=("Arial", 11, "bold"), text_color="red")],
                 [sg.Text(f"Overwrite file \'{fobj_out_code}\'?")],
                 [sg.Ok("Yes"), sg.Cancel("No")]
             ]
