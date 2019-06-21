@@ -109,6 +109,8 @@ Github: StefSchneider
 ## 12.6.2019 # 18:52 # E
 ## 15.6.2019 # 19:08 # A
 ## 15.6.2019 # 19:53 # E
+## 21.6.2019 # 9:08 # A
+## 21.6.2019 # 9:17 # E
 
 # from dateutil.parser import parse
 
@@ -183,7 +185,8 @@ SYNONYM_START: set = {"s", "S", "start", "Start", "START", "b", "B", "begin", "B
 SYNONYM_END: set = {"e", "E", "End", "end", "Ende", "ende", "ENDE", "close", "Close", "CLOSE", "c", "C"}
 TIME_RESOLUTION: int = 15
 MAX_HOURS: int = 24 # maximum hours allowed between start und end of a timestamp
-SECTION_TO_SHOW: int = 5 # number of date lines shown in case of start/end-Error
+SECTION_TO_SHOW_BEFORE: int = 5 # number of date lines shown in case of start/end-Error before error
+SECTION_TO_SHOW_AFTER: int = 5 # number of date lines shown in case of start/end-Error after error
 SEQUENCE_TIMESTAMP: dict = {"part_date": 0,  # key: content; value: position in timestamp entries
                             "part_time": 1,
                             "part_blocksignal": 2,
@@ -504,7 +507,7 @@ class Timestamp_Item:
         sg.ChangeLookAndFeel("TealMono")
         while not new_date_entry:
             layout = [
-                [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps))}")],
+                [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps, False))}")],
                 [sg.Text(f"\{self.wrong_date} {self.date_error_message}", font=("Arial", 11, "bold"),
                          text_color=("red" if not new_date_entry else "green"))],
                 [sg.CalendarButton("correct date", target=(True, False), key='date')],
@@ -517,7 +520,7 @@ class Timestamp_Item:
             day = date_values[0].day
             while button_correct_date != "Submit":
                 layout = [
-                    [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps))}")],
+                    [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps, False))}")],
                     [sg.Text(f"\'{self.wrong_date}' new date", font=("Arial", 11, "bold"), text_color="green")],
                     [sg.CalendarButton("correct date")],
                     [sg.Submit("Submit"), sg.Cancel("Cancel")]
@@ -612,7 +615,7 @@ def check_date_format(DATE_FORMAT: dict):
             DATE_FORMAT["American"] = True
 
 
-def exclude_section(list_in: list) -> list:
+def exclude_section(list_in: list, show_section_after: bool) -> list:
     """
 
     :param list_in:
@@ -622,13 +625,13 @@ def exclude_section(list_in: list) -> list:
     ## 15.6.2019 # 11:51 # E
     section_list: list = []
     length_list: int = len(list_in)
-    if length_list > SECTION_TO_SHOW:
-        length_list = SECTION_TO_SHOW
+    if length_list > SECTION_TO_SHOW_BEFORE:
+        length_list = SECTION_TO_SHOW_BEFORE
     for items in list_in[len(list_in)-length_list:]:
         if DATE_FORMAT["German"]:
-            datestring = str(items[0].day) + "." + str(items[0].month) + "." + str(items[0].year)
+            datestring = str(items[0].day) + "." + str(items[0].month) + "." + str(items[0].year) + " " + str(items[1])
         elif DATE_FORMAT["American"]:
-            datestring = str(items[0])
+            datestring = str(items[0]) + " " + str(items[1])
         section_list.append(datestring)
     print(section_list)
 
