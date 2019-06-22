@@ -113,6 +113,8 @@ Github: StefSchneider
 ## 21.6.2019 # 9:17 # E
 ## 21.6.2019 # 17:59 # A
 ## 21.6.2019 # 18:45 # E
+## 22.6.2019 # 15:55 # A
+## 22.6.2019 # 16:35 # E
 
 
 
@@ -287,6 +289,7 @@ class File(object):
                         file_suffix = FILESUFFIXES[EXTENSION_FILENAME_TIMESTAMP][i]
             else:
                 show_error_message("Can't start file without format!")
+        window.Close()
         new_path = self.file_data[0].joinpath(NEW_DIRECTORY_PATH)
         if NEW_DIRECTORY_PATH != "":
             try:
@@ -418,6 +421,7 @@ class Timestamp_Item:
                         ]
                     (button_projectname, values) = sg.Window("Projectname").Layout(layout).Read()
                 projectname = values[0]
+                window.Close()
 
             return projectname
         elif re.search(r"PROJECT", self.line_in.upper()):
@@ -523,25 +527,19 @@ class Timestamp_Item:
         while button_correct_date != "Submit" and not new_date_entry:
             layout = [
                 [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps, False))}")],
-                [sg.Text(f"\{self.wrong_date} {self.date_error_message}", font=("Arial", 11, "bold"),
+                [sg.Text(f"{self.wrong_date} {self.date_error_message}", font=("Arial", 11, "bold"),
                          text_color=("red" if not new_date_entry else "green"))],
                 [sg.CalendarButton("correct date", target=(True, False), key='date')],
-                [sg.Submit()] if new_date_entry == True,
+                [sg.Submit()]
             ]
             window = sg.Window("Calendar").Layout(layout)
-            date_values = window.Read()
-            year = date_values[0].year
-            month = date_values[0].month
-            day = date_values[0].day
-            while button_correct_date != "Submit":
-                layout = [
-                    [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps, False))}")],
-                    [sg.Text(f"\'{self.wrong_date}' new date", font=("Arial", 11, "bold"), text_color="green")],
-                    [sg.CalendarButton("correct date")],
-                    [sg.Submit("Submit"), sg.Cancel("Cancel")]
-                ]
-                window = sg.Window("Calendar").Layout(layout)
-                button_correct_date = window.Read()
+            button_correct_date, date_values = window.Read()
+            print(button_correct_date, date_values, type(date_values))
+#            date_values = date_values.split("-")
+            year = date_values[0]
+            month = date_values[0]
+            day = date_values[0]
+            window.Close()
             if datetime.date:
                 new_date_entry = True
 
@@ -622,6 +620,7 @@ def check_date_format(DATE_FORMAT: dict):
             ]
             window = sg.Window("Check date format").Layout(layout)
             button_date_format, values = window.Read()
+        window.Close()
         if values[0] == True:
             DATE_FORMAT["German"] = True
             DATE_FORMAT["American"] = False
@@ -685,6 +684,7 @@ while not button_source_file:
             show_error_message("Can't find file!")
     if button_source_file == "Cancel":
         break
+    window.Close()
     source_file = pathlib.Path(source_file)
     file_input = File()
     file_in_data = file_input.parse_filename(source_file)
@@ -706,7 +706,7 @@ while not button_source_file:
             else:
                 show_error_message("Finish program without result")
                 break
-
+        window.Close()
         for line in fobj_in: # split code and timestamps in file and list
             if any(line.lstrip(" ").startswith(marks) for marks in MARKS_TIMESTAMP):
                 raw_timestamps.append([line])
