@@ -117,6 +117,8 @@ Github: StefSchneider
 ## 22.6.2019 # 16:35 # E
 ## 23.6.2019 # 11:09 # A
 ## 23.6.2019 # 11:30 # E
+## 23.6.2019 # 19.10 # A
+## 23.6.2019 # 20:14 # E
 
 
 
@@ -526,17 +528,20 @@ class Timestamp_Item:
         new_date_entry: bool = False
         button_correct_date: str = ""
         sg.ChangeLookAndFeel("TealMono")
+        layout = [
+            [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps, False))}")],
+            [sg.InputText(f"{self.wrong_date}", font=("Arial", 11, "bold"),
+                     text_color="red", key="input"),
+             sg.Text(f"{self.date_error_message}", font=("Arial", 11, "bold"), text_color="red", )],
+            [sg.CalendarButton("correct date", target="input", key='date')],
+            [sg.Submit(key="submit")]
+        ]
+        window = sg.Window("Calendar").Layout(layout)
         while button_correct_date != "Submit" and not new_date_entry:
-            layout = [
-                [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps, False))}")],
-                [sg.Text(f"{self.wrong_date} {self.date_error_message}", font=("Arial", 11, "bold"),
-                         text_color=("red" if not new_date_entry else "green"))],
-                [sg.CalendarButton("correct date", target=(True, False), key='date')],
-                [sg.Submit()]
-            ]
-            window = sg.Window("Calendar").Layout(layout)
+
             button_correct_date, date_values = window.Read()
-            print(self.wrong_date, button_correct_date, date_values, type(date_values))
+            window.Refresh()
+            print(self.wrong_date, button_correct_date, date_values["input"], type(date_values))
 #            date_values = date_values.split("-")
             year = date_values[0]
             month = date_values[0]
@@ -708,7 +713,7 @@ while not button_source_file:
             else:
                 show_error_message("Finish program without result")
                 break
-        window.Close()
+            window.Close()
         for line in fobj_in: # split code and timestamps in file and list
             if any(line.lstrip(" ").startswith(marks) for marks in MARKS_TIMESTAMP):
                 raw_timestamps.append([line])
