@@ -115,6 +115,8 @@ Github: StefSchneider
 ## 21.6.2019 # 18:45 # E
 ## 22.6.2019 # 15:55 # A
 ## 22.6.2019 # 16:35 # E
+## 23.6.2019 # 11:09 # A
+## 23.6.2019 # 11:30 # E
 
 
 
@@ -534,7 +536,7 @@ class Timestamp_Item:
             ]
             window = sg.Window("Calendar").Layout(layout)
             button_correct_date, date_values = window.Read()
-            print(button_correct_date, date_values, type(date_values))
+            print(self.wrong_date, button_correct_date, date_values, type(date_values))
 #            date_values = date_values.split("-")
             year = date_values[0]
             month = date_values[0]
