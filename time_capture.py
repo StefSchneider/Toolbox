@@ -119,6 +119,8 @@ Github: StefSchneider
 ## 23.6.2019 # 11:30 # E
 ## 23.6.2019 # 19.10 # A
 ## 23.6.2019 # 20:14 # E
+## 25.6.2019 # 20:30 # A
+## 25.6.2019 # 21:12 # E
 
 
 
@@ -540,17 +542,19 @@ class Timestamp_Item:
         while button_correct_date != "Submit" and not new_date_entry:
 
             button_correct_date, date_values = window.Read()
-            window.Refresh()
-            print(self.wrong_date, button_correct_date, date_values["input"], type(date_values))
-#            date_values = date_values.split("-")
-            year = date_values[0]
-            month = date_values[0]
-            day = date_values[0]
+#            print(self.wrong_date, button_correct_date,date_values["input"].split(" ")[0], self.check_entry_date(date_values["input"]), type(date_values["input"]))
+            date_values = date_values["input"].split(" ")[0]
+            date_values = datetime.date.fromisoformat(date_values)
+            print(date_values)
+
+ #           year = date_values.year
+ #           month = date_values[0]
+ #           day = date_values[0]
             window.Close()
-            if datetime.date:
+            if date_values:
                 new_date_entry = True
 
-        return datetime.date(year, month, day)
+        return date_values
 
 
 
