@@ -121,6 +121,7 @@ Github: StefSchneider
 ## 23.6.2019 # 20:14 # E
 ## 25.6.2019 # 20:30 # A
 ## 25.6.2019 # 21:12 # E
+## 26.6.2019 # 7:24 # A
 
 
 
@@ -534,25 +535,25 @@ class Timestamp_Item:
             [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps, False))}")],
             [sg.InputText(f"{self.wrong_date}", font=("Arial", 11, "bold"),
                      text_color="red", key="input"),
-             sg.Text(f"{self.date_error_message}", font=("Arial", 11, "bold"), text_color="red", )],
+             sg.Text(f"{self.date_error_message}", font=("Arial", 11, "bold"), text_color="red", key = "error-message")],
             [sg.CalendarButton("correct date", target="input", key='date')],
             [sg.Submit(key="submit")]
         ]
         window = sg.Window("Calendar").Layout(layout)
         while button_correct_date != "Submit" and not new_date_entry:
-
             button_correct_date, date_values = window.Read()
-#            print(self.wrong_date, button_correct_date,date_values["input"].split(" ")[0], self.check_entry_date(date_values["input"]), type(date_values["input"]))
             date_values = date_values["input"].split(" ")[0]
-            date_values = datetime.date.fromisoformat(date_values)
-            print(date_values)
-
- #           year = date_values.year
- #           month = date_values[0]
- #           day = date_values[0]
-            window.Close()
-            if date_values:
+            try:
+                date_values = datetime.date.fromisoformat(date_values)
+                if date_values:
+                    new_date_entry = True
+            except ValueError:
+                date_values = self.check_entry_date(date_values)
                 new_date_entry = True
+
+            self.date_error_message = "correct date"
+            window.Element("error-message").Update(self.date_error_message, text_color = "green")
+        window.Close()
 
         return date_values
 
