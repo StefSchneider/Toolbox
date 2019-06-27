@@ -122,6 +122,9 @@ Github: StefSchneider
 ## 25.6.2019 # 20:30 # A
 ## 25.6.2019 # 21:12 # E
 ## 26.6.2019 # 7:24 # A
+## 26.6.2019 # 8:20 # E
+## 27.6.2019 # 7:21 # A
+## 27.6.2019 # 8:23 # E
 
 
 
@@ -177,6 +180,7 @@ import typing
 import PySimpleGUI as sg
 import re
 import pathlib
+import time
 # from dateutil.parser import parse
 
 
@@ -533,16 +537,18 @@ class Timestamp_Item:
         sg.ChangeLookAndFeel("TealMono")
         layout = [
             [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps, False))}")],
-            [sg.InputText(f"{self.wrong_date}", font=("Arial", 11, "bold"),
-                     text_color="red", key="input"),
-             sg.Text(f"{self.date_error_message}", font=("Arial", 11, "bold"), text_color="red", key = "error-message")],
-            [sg.CalendarButton("correct date", target="input", key='date')],
+            [sg.InputText(f"{self.wrong_date}", font=("Arial", 11, "bold"), size = (15,1),
+                     text_color="red", focus=True, key="input"),
+             sg.Text(self.date_error_message, font=("Arial", 11, "bold"), text_color="red", key = "error-message")],
+            [sg.CalendarButton("open calendar", target="input", key='date')],
             [sg.Submit(key="submit")]
         ]
         window = sg.Window("Calendar").Layout(layout)
         while button_correct_date != "Submit" and not new_date_entry:
             button_correct_date, date_values = window.Read()
             date_values = date_values["input"].split(" ")[0]
+ #           window.Element("input").Update(date_values)
+
             try:
                 date_values = datetime.date.fromisoformat(date_values)
                 if date_values:
@@ -550,9 +556,9 @@ class Timestamp_Item:
             except ValueError:
                 date_values = self.check_entry_date(date_values)
                 new_date_entry = True
-
-            self.date_error_message = "correct date"
-            window.Element("error-message").Update(self.date_error_message, text_color = "green")
+        self.date_error_message = " date accepted"
+        window.Element("error-message").Update(self.date_error_message, text_color="green")
+        time.sleep(1)
         window.Close()
 
         return date_values
