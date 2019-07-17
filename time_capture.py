@@ -3,7 +3,7 @@ calculates work time of a sepcific project by extracting time stamps in a code a
 autor: Stefan Schneider
 Github: StefSchneider
 """
-#@ project: TIME CAPTURE
+# @ project: TIME CAPTURE
 ## 14.04.2019 # 12:00 # B
 ## 14.04.2019 # 12:15 # Ende
 ## 14.04.2019 # 12:15 # B
@@ -125,7 +125,7 @@ Github: StefSchneider
 ## 26.6.2019 # 8:20 # E
 ## 27.6.2019 # 7:21 # A
 ## 27.6.2019 # 8:23 # E
-
+## 10.7.2019 # 19:28 # A
 
 
 """
@@ -174,40 +174,41 @@ Exceptions:
 
 """
 
-
 import datetime
-import typing
-import PySimpleGUI as sg
-import re
 import pathlib
+import re
 import time
+import typing
+
+import PySimpleGUI as sg
+
 # from dateutil.parser import parse
 
 
 # use constants to configure
-EXTENSION_FILENAME_TIMESTAMP: str = "_timestamp" # extension for new filename with timestamp data
-EXTENSION_FILENAME_CODE: str = "_code" # extension for new filename without timestamp data
+EXTENSION_FILENAME_TIMESTAMP: str = "_timestamp"  # extension for new filename with timestamp data
+EXTENSION_FILENAME_CODE: str = "_code"  # extension for new filename without timestamp data
 FILESUFFIXES: dict = {EXTENSION_FILENAME_TIMESTAMP: ("txt", "xlxs", "csv",),
                       EXTENSION_FILENAME_CODE: ("py",)
-                    } # allowed suffixes for timestamp file an code file
-NEW_DIRECTORY_PATH = "timestamp" # name of new directory
-MARKS_TIMESTAMP: tuple = ("##", "#@", "#T") # add more if needed
-DIVIDE_SIGNS_LINES = re.compile("[\^|#|\*]") # group for regular expressions, add more if needed
+                      }  # allowed suffixes for timestamp file an code file
+NEW_DIRECTORY_PATH = "timestamp"  # name of new directory
+MARKS_TIMESTAMP: tuple = ("##", "#@", "#T")  # add more if needed
+DIVIDE_SIGNS_LINES = re.compile("[\^|#|\*]")  # group for regular expressions, add more if needed
 DIVIDE_SIGNS_DATE = re.compile("[:|\.|/|\-|\s]")
 DATE_SIGNS = re.compile("([0-9]|:|\.|/|\s)*")
-DATE_SPLIT_SIGNS: tuple = (":", ".", ("/")) # add more if needed
+DATE_SPLIT_SIGNS: tuple = (":", ".", ("/"))  # add more if needed
 SYNONYM_START: set = {"s", "S", "start", "Start", "START", "b", "B", "begin", "Beginn", "beginn", "BEGIN", "BEGINN",
                       "Anfang", "anfang", "ANFANG", "a", "A", "open", "OPEN", "Open", "o", "O"}
 SYNONYM_END: set = {"e", "E", "End", "end", "Ende", "ende", "ENDE", "close", "Close", "CLOSE", "c", "C"}
 TIME_RESOLUTION: int = 15
-MAX_HOURS: int = 24 # maximum hours allowed between start und end of a timestamp
-SECTION_TO_SHOW_BEFORE: int = 5 # number of date lines shown in case of start/end-Error before error
-SECTION_TO_SHOW_AFTER: int = 5 # number of date lines shown in case of start/end-Error after error
+MAX_HOURS: int = 24  # maximum hours allowed between start und end of a timestamp
+SECTION_TO_SHOW_BEFORE: int = 5  # number of date lines shown in case of start/end-Error before error
+SECTION_TO_SHOW_AFTER: int = 5  # number of date lines shown in case of start/end-Error after error
 SEQUENCE_TIMESTAMP: dict = {"part_date": 0,  # key: content; value: position in timestamp entries
                             "part_time": 1,
                             "part_blocksignal": 2,
                             "part_description": 3
-                            } # orders sequence of timestamp input
+                            }  # orders sequence of timestamp input
 SEQUENCE_DATE: dict = {"year": (2, 0),
                        "month": (1, 1),
                        "day": (0, 2)
@@ -215,11 +216,14 @@ SEQUENCE_DATE: dict = {"year": (2, 0),
 DATE_FORMAT: dict = {"German": True,
                      "American": False
                      }
+LOOK_AND_FEEL: dict = {"standard": ()
+                       # order. window color, font_name1, font_size1, font_color1, font_name2, font_size2, font_color2
+                       }
 
 projectname: str = ""
-found_projectname: bool = False # set on True if projectname is extracted from comment lines, else raise exception
+found_projectname: bool = False  # set on True if projectname is extracted from comment lines, else raise exception
 projectpart: str = ""
-expected_addition: str = "" # what addition at timestamp is expected next, start or end
+expected_addition: str = ""  # what addition at timestamp is expected next, start or end
 filename_in: str = ""
 filename_out_timestamp: str = ""
 filename_out_code: str = ""
@@ -227,17 +231,18 @@ raw_timestamps: list = []
 final_timestamps: list = []
 button_source_file: bool = False
 source_file: str = ""
-timestamp_items: list = [] # fixed order of items: date, time, blocksignal, description
-code_lines: str = "" # collects all lines of code for writing into fobj_out_code
-timestamp_line: str = "" # # collects all lines of code for writing into fobj_out_timestamps
+timestamp_items: list = []  # fixed order of items: date, time, blocksignal, description
+code_lines: str = ""  # collects all lines of code for writing into fobj_out_code
+timestamp_line: str = ""  # # collects all lines of code for writing into fobj_out_timestamps
 last_timestamp: bool = False
-projectnames: list = [] # collect all given project names in comment lines
+projectnames: list = []  # collect all given project names in comment lines
 
 
 class File(object):
     """
 
     """
+
     def __init__(self):
         """
         initialize new file object
@@ -246,7 +251,6 @@ class File(object):
         self.filename: str = "name"
         self.filesuffix: str = "extension"
 
-
     def __str__(self):
         """
 
@@ -254,7 +258,6 @@ class File(object):
         """
 
         return self.filename_in
-
 
     def parse_filename(self, filename_in: str) -> typing.Tuple[pathlib.Path, str, str]:
         """
@@ -266,7 +269,6 @@ class File(object):
         self.filesuffix = pathlib.Path(filename_in).suffix
 
         return (self.filepath, self.filename, self.filesuffix)
-
 
     def create_files(self, file_data: typing.Tuple[pathlib.Path, str, str]) -> typing.Tuple[pathlib.Path, pathlib.Path]:
         """
@@ -288,7 +290,8 @@ class File(object):
             sg.ChangeLookAndFeel("TealMono")
             layout = [
                 [sg.Text("Output timestamp data in format:", font=("Arial", 10))],
-                [sg.Radio(FILESUFFIXES[EXTENSION_FILENAME_TIMESTAMP][i], "fileformat", default=(True if i == 0 else False))
+                [sg.Radio(FILESUFFIXES[EXTENSION_FILENAME_TIMESTAMP][i], "fileformat",
+                          default=(True if i == 0 else False))
                  for i, elements in enumerate(FILESUFFIXES[EXTENSION_FILENAME_TIMESTAMP])],
                 [sg.Submit(), sg.Cancel()]
             ]
@@ -311,8 +314,7 @@ class File(object):
         return (
             new_path.joinpath(self.filename + EXTENSION_FILENAME_TIMESTAMP + "." + file_suffix),
             new_path.joinpath(self.filename + EXTENSION_FILENAME_CODE + "." + FILESUFFIXES[EXTENSION_FILENAME_CODE][0])
-            )
-
+        )
 
     def overwrite_file(self, file_data: typing.Tuple[str, str], code: list = []):
         """
@@ -320,9 +322,38 @@ class File(object):
         :return:
         """
         self.code = code
-        if not self.code: # check code to prohibit overwriting data with empty data
+        if not self.code:  # check code to prohibit overwriting data with empty data
             print("Error! Empty data.")
         pass
+
+
+class Source_File(File):
+    """
+
+    """
+    pass
+
+
+class Target_File(File):
+    """
+
+    """
+    pass
+
+
+class Target_File_Data(Target_File):
+    """
+
+    """
+    pass
+
+
+class Target_File_Code(Target_File):
+    """
+
+    """
+    pass
+
 
 
 """
@@ -335,7 +366,16 @@ Reihenfolge für Timestamp-Überprüfungen:
 
 """
 
-class Timestamp_Item:
+
+class Item_List:
+
+    def __init__(self):
+        """"
+        """
+        pass
+
+
+class Timestamp_Item: #class Timestamp
     """
     Liest und erfasst alle Daten, die für die gesammelte Zeiterfassung nötig sind
     """
@@ -348,14 +388,12 @@ class Timestamp_Item:
         self.line_in: str = line_in
         self.last_entry = last_entry
 
-
     def __str__(self):
         """
 
         :return:
         """
         pass
-
 
     def parse_timestamp_data(self) -> list:
         """
@@ -367,13 +405,12 @@ class Timestamp_Item:
             self.line_in = self.line_in.lstrip(marker)
         self.line_in = self.line_in.rstrip("\n")
         parts = re.split(DIVIDE_SIGNS_LINES, self.line_in)
-        for i in range(0, len(SEQUENCE_TIMESTAMP)-len(parts)):
-            parts.append("") # add empty strings to fill up parts
+        for i in range(0, len(SEQUENCE_TIMESTAMP) - len(parts)):
+            parts.append("")  # add empty strings to fill up parts
         for i, part in enumerate(parts):
             parts[i] = parts[i].strip(" ")
 
         return parts
-
 
     def check_entries(self):
         """
@@ -389,10 +426,10 @@ class Timestamp_Item:
         :return: True oder False sowie die mögliche Fehlerstelle
         """
 
-        timestamp_items[0] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_date"]] # 1st: date
-        timestamp_items[1] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_time"]] # 2nd: time
-        timestamp_items[2] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_blocksignal"]] # 3rd: blocksignal
-        timestamp_items[3] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_description"]] # 4th: description
+        timestamp_items[0] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_date"]]  # 1st: date
+        timestamp_items[1] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_time"]]  # 2nd: time
+        timestamp_items[2] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_blocksignal"]]  # 3rd: blocksignal
+        timestamp_items[3] = self.parse_timestamp_data()[SEQUENCE_TIMESTAMP["part_description"]]  # 4th: description
         print("Timestamp items", timestamp_items[1])
         correct_date_entry = self.check_entry_date((timestamp_items[0]))
         if correct_date_entry != None:
@@ -405,9 +442,6 @@ class Timestamp_Item:
         if self.check_projectname(self.line_in) != None:
             print("Check projectname successful")
 
-
-
-
     def check_projectname(self, line_in: str) -> str:
         """
         checks whether projectname is given in complete timestamp list
@@ -416,7 +450,7 @@ class Timestamp_Item:
         :return: projectname
         """
         if self.last_entry == True:
-            if len(projectnames) == 1: # to ensure that there is just a projectname given
+            if len(projectnames) == 1:  # to ensure that there is just a projectname given
                 projectname = projectnames[0]
                 projectname = re.split("PROJECT", projectname.upper())
                 projectname = projectname[1].strip(" ")
@@ -429,7 +463,7 @@ class Timestamp_Item:
                         [sg.Text("No valid projectname found! Please add projectname.", font=("Arial", 11, "bold"))],
                         [sg.InputText("")],
                         [sg.Submit("Submit"), sg.Cancel()]
-                        ]
+                    ]
                     (button_projectname, values) = sg.Window("Projectname").Layout(layout).Read()
                 projectname = values[0]
                 window.Close()
@@ -440,7 +474,6 @@ class Timestamp_Item:
 
             return None
 
-
     def check_entry_date(self, date_in: str) -> datetime.date:
         """
         checks and corrects timestamp date
@@ -450,7 +483,6 @@ class Timestamp_Item:
         - ist der ausgelesene Datumseintrag kleiner als der letzte vorhandene Datumseintrag: Fehlermeldung und Korrrekturmöglichkeit
 
 
-        :param current_date: Datumseintrag aus der Kommentarzeile
         :param predessesor_date: letzter vorhandener und überprüfter Datumseintrag
         :return: überprüftes und korrigiertes Datum im ISO-Format
         """
@@ -498,7 +530,6 @@ class Timestamp_Item:
 
             return None
 
-
     def correct_date(self, wrong_date: str, date_error_message) -> datetime.date:
         """
 
@@ -537,9 +568,9 @@ class Timestamp_Item:
         sg.ChangeLookAndFeel("TealMono")
         layout = [
             [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps, False))}")],
-            [sg.InputText(f"{self.wrong_date}", font=("Arial", 11, "bold"), size = (15,1),
-                     text_color="red", focus=True, key="input"),
-             sg.Text(self.date_error_message, font=("Arial", 11, "bold"), text_color="red", key = "error-message")],
+            [sg.InputText(f"{self.wrong_date}", font=("Arial", 11, "bold"), size=(15, 1),
+                          text_color="red", focus=True, key="input"),
+             sg.Text(self.date_error_message, font=("Arial", 11, "bold"), text_color="red", key="error-message")],
             [sg.CalendarButton("open calendar", target="input", key='date')],
             [sg.Submit(key="submit")]
         ]
@@ -547,7 +578,7 @@ class Timestamp_Item:
         while button_correct_date != "Submit" and not new_date_entry:
             button_correct_date, date_values = window.Read()
             date_values = date_values["input"].split(" ")[0]
- #           window.Element("input").Update(date_values)
+            #           window.Element("input").Update(date_values)
 
             try:
                 date_values = datetime.date.fromisoformat(date_values)
@@ -556,20 +587,17 @@ class Timestamp_Item:
             except ValueError:
                 date_values = self.check_entry_date(date_values)
                 new_date_entry = True
-        self.date_error_message = " date accepted"
-        window.Element("error-message").Update(self.date_error_message, text_color="green")
-        time.sleep(1)
-        window.Close()
+
+            if new_date_entry:
+                self.date_error_message = " date accepted"
+                window.Element("error-message").Update(self.date_error_message, text_color="green")
+                time.sleep(1)
+
+        #        window.Close()
 
         return date_values
 
-
-
-
-
-
-#    def check_entry_date(self, date_in: str, predessesor_date: str = "0000-00-00") -> str:
-
+    #    def check_entry_date(self, date_in: str, predessesor_date: str = "0000-00-00") -> str:
 
     def add_entry(self):
         """
@@ -578,14 +606,12 @@ class Timestamp_Item:
         """
         pass
 
-
     def revise_entry(self):
         """
         korrigiert den Eintrag, wenn fehlerhaft
         :return:
         """
         pass
-
 
     def record_entry(self):
         """
@@ -597,25 +623,157 @@ class Timestamp_Item:
         pass
 
 
+class Timestamp_Parts(object):
+    """
+
+    """
+    pass
 
 
-def show_error_message(error_message: str):
+class Timestamp_Parts_Projectname(Timestamp_Parts):
     """
-    Opens a window and shows an error message
-    :param message: Message to show in Window
-    :return: None
+
     """
-    ## 23.04.2019 # 6:28 # B # function show_error_message
-    ## 23.04.2019 # 6:41 # E
-    ## Hier steht Quatsch
-    ## 212 Und hier steht ein bewusster Fehler
-    sg.ChangeLookAndFeel("Reds")
-    layout = [
-        [sg.Text(error_message, font=("Arial", 10))],
-        [sg.OK()]
-    ]
-    window = sg.Window("ERROR").Layout(layout)
-    error_button, values = window.Read()
+    pass
+
+
+class Timestamp_Parts_Date(Timestamp_Parts):
+    """
+
+    """
+    pass
+
+
+class Timestamp_Parts_Time(Timestamp_Parts):
+    """
+
+    """
+    pass
+
+
+class Timestamp_Parts_Blocksignal(Timestamp_Parts):
+    """
+
+    """
+    pass
+
+
+class Timestamp_Parts_Description(Timestamp_Parts):
+    """
+
+    """
+    pass
+
+
+
+class Gui:
+
+    def __init__(self, lookandfeel: str):
+        """
+
+        """
+        self.lookandfeel = lookandfeel
+        pass
+
+    def window_error_message(self, error_message: str):
+        """
+        Opens a window and shows an error message
+        :param message: Message to show in Window
+        :return: None
+        """
+        ## 23.04.2019 # 6:28 # B # function show_error_message
+        ## 23.04.2019 # 6:41 # E
+        ## Hier steht Quatsch
+        ## 212 Und hier steht ein bewusster Fehler
+        self.error_message = error_message
+        sg.ChangeLookAndFeel(self.lookandfeel)
+        layout = [
+            [sg.Text(self.error_message, font=("Arial", 11))],
+            [sg.CloseButton("OK")]
+        ]
+        window = sg.Window("ERROR").Layout(layout)
+
+    #       event = window.Read()
+
+    def window_file_analyze(self) -> tuple:
+        """
+
+        :return:
+        """
+        event: bool = False
+        source_file: str = ""
+        sg.ChangeLookAndFeel(self.lookandfeel)
+        layout = [
+            [sg.Text("File to analyze", font=("Arial", 10))],
+            [sg.InputText(), sg.FileBrowse()],
+            [sg.Submit("Submit"), sg.Cancel("Cancel")]
+        ]
+        window = sg.Window("Capture Timestamp").Layout(layout)
+        event, source_file = window.Read()
+
+        return event, source_file
+
+    def window_data_format(self) -> tuple:
+        """
+
+        :return:
+        """
+        event: bool = False
+        values: list = []
+        sg.ChangeLookAndFeel(self.lookandfeel)
+        layout = [
+            [sg.Text("Output timestamp data in format:", font=("Arial", 10))],
+            [sg.Radio(FILESUFFIXES[EXTENSION_FILENAME_TIMESTAMP][i], "fileformat", default=(True if i == 0 else False))
+             for i, elements in enumerate(FILESUFFIXES[EXTENSION_FILENAME_TIMESTAMP])],
+            [sg.Submit(), sg.Cancel()]
+        ]
+        window = sg.Window("Test Format").Layout(layout)
+        event, values = window.Read()
+
+        return event, values
+
+    def window_file_overwrite(self, fobj_out_code) -> tuple:
+        """
+
+        :return:
+        """
+        self.fobj_out_code = fobj_out_code
+        event: bool = False
+        values: str = ""
+        sg.ChangeLookAndFeel(self.lookandfeel)
+        layout = [
+            [sg.Text(f"\'{self.fobj_out_code}\' already exists.", font=("Arial", 11, "bold"), text_color="red")],
+            [sg.Text(f"Overwrite file \'{self.fobj_out_code}\'?")],
+            [sg.Ok("Yes"), sg.Cancel("No")]
+        ]
+        window = sg.Window("File owerwriting").Layout(layout)
+        event, values = window.Read()
+
+        return event, values
+
+    def window_correct_date(self, wrong_date: str, date_error_message) -> str:
+        """
+
+        :return:
+        """
+        self.wrong_date = wrong_date
+        self.date_error_message = date_error_message
+        new_line: str = "\n"
+        new_date: str = ""
+        #        new_date_entry: bool = False
+        button_correct_date: str = ""
+        sg.ChangeLookAndFeel(self.lookandfeel)
+        layout = [
+            [sg.Text(f"Entries before:{new_line}{new_line.join(exclude_section(final_timestamps, False))}")],
+            [sg.InputText(f"{self.wrong_date}", font=("Arial", 11, "bold"), size=(15, 1),
+                          text_color="red", focus=True, key="__INPUT__"),
+             sg.Text(self.date_error_message, font=("Arial", 11, "bold"), text_color="red", key="__ERROR_MESSAGE__")],
+            [sg.CalendarButton("open calendar", target="input", key="__DATE__")],
+            [sg.Submit(key="__SUBMIT__")]
+        ]
+        window = sg.Window("Calendar").Layout(layout)
+
+        return new_date
 
 
 def check_date_format(DATE_FORMAT: dict):
@@ -633,7 +791,7 @@ def check_date_format(DATE_FORMAT: dict):
             sg.ChangeLookAndFeel("TealMono")
             layout = [
                 [sg.Text("Timestamp date format:", font=("Arial", 10))],
-                [sg.Radio("German", "dateformat", default = True), sg.Radio("American", "dateformat")],
+                [sg.Radio("German", "dateformat", default=True), sg.Radio("American", "dateformat")],
                 [sg.Submit(), sg.Cancel()]
             ]
             window = sg.Window("Check date format").Layout(layout)
@@ -645,6 +803,25 @@ def check_date_format(DATE_FORMAT: dict):
         else:
             DATE_FORMAT["German"] = False
             DATE_FORMAT["American"] = True
+
+    def show_error_message(error_message: str):
+        """
+        Opens a window and shows an error message
+        :param message: Message to show in Window
+        :return: None
+        """
+        ## 23.04.2019 # 6:28 # B # function show_error_message
+        ## 23.04.2019 # 6:41 # E
+        ## Hier steht Quatsch
+        ## 212 Und hier steht ein bewusster Fehler
+        sg.ChangeLookAndFeel("Reds")
+        layout = [
+            [sg.Text(error_message, font=("Arial", 10))],
+            [sg.CloseButton("OK")]
+        ]
+        window = sg.Window("ERROR").Layout(layout)
+        event = window.Read()
+        window.Close()
 
 
 def exclude_section(list_in: list, show_section_after: bool) -> list:
@@ -659,7 +836,7 @@ def exclude_section(list_in: list, show_section_after: bool) -> list:
     length_list: int = len(list_in)
     if length_list > SECTION_TO_SHOW_BEFORE:
         length_list = SECTION_TO_SHOW_BEFORE
-    for items in list_in[len(list_in)-length_list:]:
+    for items in list_in[len(list_in) - length_list:]:
         if DATE_FORMAT["German"]:
             datestring = str(items[0].day) + "." + str(items[0].month) + "." + str(items[0].year) + " " + str(items[1])
         elif DATE_FORMAT["American"]:
@@ -670,13 +847,11 @@ def exclude_section(list_in: list, show_section_after: bool) -> list:
     return section_list
 
 
-
 # PREPERATION
 
 check_date_format(DATE_FORMAT)
 for i in range(0, len(SEQUENCE_TIMESTAMP)):
-    timestamp_items.append("") # fill list of timestamp items with empty strings
-
+    timestamp_items.append("")  # fill list of timestamp items with empty strings
 
 # MAIN PROGRAM
 
@@ -708,9 +883,9 @@ while not button_source_file:
     file_in_data = file_input.parse_filename(source_file)
     fobj_out_timestamp, fobj_out_code = file_input.create_files(file_in_data)
 
-    with source_file.open(mode = "r") as fobj_in:
+    with source_file.open(mode="r") as fobj_in:
         try:
-            fobj_out_code.open(mode = "x")
+            fobj_out_code.open(mode="x")
         except FileExistsError:
             sg.ChangeLookAndFeel("TealMono")
             layout = [
@@ -720,12 +895,12 @@ while not button_source_file:
             ]
             (button, values) = sg.Window("File owerwriting").Layout(layout).Read()
             if button == "Yes":
-                fobj_out_code.open(mode = "w")
+                fobj_out_code.open(mode="w")
             else:
                 show_error_message("Finish program without result")
                 break
             window.Close()
-        for line in fobj_in: # split code and timestamps in file and list
+        for line in fobj_in:  # split code and timestamps in file and list
             if any(line.lstrip(" ").startswith(marks) for marks in MARKS_TIMESTAMP):
                 raw_timestamps.append([line])
             else:
@@ -739,12 +914,11 @@ print(raw_timestamps)
 # current_timestamp.check_entries()
 
 
-for i, timestamp_entries in enumerate(raw_timestamps): # checks whether current timestamp is last timestamp in list
-    if i == len(raw_timestamps)-1:
+for i, timestamp_entries in enumerate(raw_timestamps):  # checks whether current timestamp is last timestamp in list
+    if i == len(raw_timestamps) - 1:
         last_timestamp = True
     current_timestamp = Timestamp_Item(timestamp_entries[0], last_timestamp)
     current_timestamp.check_entries()
-
 
 print(final_timestamps)
 
@@ -755,7 +929,6 @@ example: str = raw_timestamps[9][0]
 current_timestamp = Timestamp_Item(example) # ES DÜRFEN KEINE ANFANGSZEICHEN WIE ## DURCHGELASEN WERDEN
 current_timestamp.parse_timestamp_data()
 """
-
 
 """
 Hauptprogrammfehlt noch:
