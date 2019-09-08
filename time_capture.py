@@ -126,6 +126,10 @@ Github: StefSchneider
 ## 27.6.2019 # 7:21 # A
 ## 27.6.2019 # 8:23 # E
 ## 10.7.2019 # 19:28 # A
+## 10.7.2019 # 20:00 # E
+## 20.7.2019 # 18:55 # A # refactoring OOP
+## 20.7.2019 # 19:10 # E
+
 
 
 """
@@ -259,6 +263,66 @@ class File(object):
 
         return self.filename_in
 
+
+    def read_filename(self) -> str:
+        """
+        probiert den Dateinamen einzulesen
+        :return:
+        """
+        while not button_source_file:
+            while source_file == "":
+                sg.ChangeLookAndFeel("TealMono")
+                layout = [
+                    [sg.Text("File to analyze", font=("Arial", 10))],
+                    [sg.InputText(), sg.FileBrowse()],
+                    [sg.Submit("Submit"), sg.Cancel("Cancel")]
+                ]
+                window = sg.Window("Capture Timestamp").Layout(layout)
+                (button_source_file, (source_file,)) = window.Read()
+                try:
+                    fobj = open(source_file)
+                except FileNotFoundError:
+                    source_file = ""
+                else:
+                    fobj.close()
+                if button_source_file == "Cancel":
+                    break
+                if source_file == "":
+                    show_error_message("Can't find file!")
+            if button_source_file == "Cancel":
+                break
+            window.Close()
+            source_file = pathlib.Path(source_file)
+            file_input = File()
+            file_in_data = file_input.parse_filename(source_file)
+            fobj_out_timestamp, fobj_out_code = file_input.create_files(file_in_data)
+
+            with source_file.open(mode="r") as fobj_in:
+                try:
+                    fobj_out_code.open(mode="x")
+                except FileExistsError:
+                    sg.ChangeLookAndFeel("TealMono")
+                    layout = [
+                        [sg.Text(f"\'{fobj_out_code}\' already exists.", font=("Arial", 11, "bold"), text_color="red")],
+                        [sg.Text(f"Overwrite file \'{fobj_out_code}\'?")],
+                        [sg.Ok("Yes"), sg.Cancel("No")]
+                    ]
+                    (button, values) = sg.Window("File owerwriting").Layout(layout).Read()
+                    if button == "Yes":
+                        fobj_out_code.open(mode="w")
+                    else:
+                        show_error_message("Finish program without result")
+                        break
+                    window.Close()
+                for line in fobj_in:  # split code and timestamps in file and list
+                    if any(line.lstrip(" ").startswith(marks) for marks in MARKS_TIMESTAMP):
+                        raw_timestamps.append([line])
+                    else:
+                        code_lines += line
+                fobj_out_code.write_text(code_lines)
+
+        return filename
+
     def parse_filename(self, filename_in: str) -> typing.Tuple[pathlib.Path, str, str]:
         """
         zerlegt die Eingangsdatei in ihre Bestandteile filepath und filename
@@ -341,7 +405,7 @@ class Target_File(File):
     pass
 
 
-class Target_File_Data(Target_File):
+class Target_File_Timestamps(Target_File):
     """
 
     """
@@ -921,6 +985,15 @@ for i, timestamp_entries in enumerate(raw_timestamps):  # checks whether current
     current_timestamp.check_entries()
 
 print(final_timestamps)
+
+
+"""
+MAIN PROGRAM OOP
+
+fobj_in = File()
+
+"""
+
 
 """
 example: str = raw_timestamps[9][0]
